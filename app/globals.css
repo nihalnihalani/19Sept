@@ -174,17 +174,3 @@ body {
 .react-pdf__Page__textContent, .react-pdf__Page__annotations {
   display: none;
 }
-
-/* Shooting Stars Animation */
-@keyframes anim-comet-1 {
-  from { transform: translate(-100vw, -100vh) rotate(215deg); opacity: 1; }
-  to { transform: translate(100vw, 100vh) rotate(215deg); opacity: 0; }
-}
-@keyframes anim-comet-2 {
-  from { transform: translate(100vw, -100vh) rotate(135deg); opacity: 1; }
-  to { transform: translate(-100vw, 100vh) rotate(135deg); opacity: 0; }
-}
-@keyframes anim-comet-3 {
-  from { transform: translateY(-100vh) rotate(180deg); opacity: 1; }
-  to { transform: translateY(100vh) rotate(180deg); opacity: 0; }
-}

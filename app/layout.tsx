@@ -3,41 +3,32 @@ import { Manrope, Source_Code_Pro } from "next/font/google";
 
 import "./globals.css";
 import AnimatedBackground from "@/components/ui/AnimatedBackground";
-import StarsBackground from "@/components/ui/StarsBackground";
-import { CometShower } from "@/components/ui/CometShower";
 
 // Google Font
 const manrope = Manrope({
   subsets: ["latin"],
-  display: "swap", // This is the default, but good to be explicit
-  variable: "--font-manrope", // This creates a CSS variable for us
+  weight: ["400", "700"],
+  variable: "--font-manrope",
 });
 
 const sourceCodePro = Source_Code_Pro({
   subsets: ["latin"],
-  display: "swap",
-  variable: "--font-source-code-pro", // CSS variable for the mono font
+  weight: ["400", "700"],
+  variable: "--font-source-code-pro",
 });
 
 export const metadata: Metadata = {
-  title: "Alchemy Studio",
-  description: "An AI-powered studio for media generation",
-  icons: {
-    icon: "/imgs/gemini_icon.svg", // This could be updated to a new logo file if available
-  },
+  title: "Github",
+  description: "Github",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: React.PropsWithChildren<{}>) {
   return (
     <html lang="en" className="dark">
       <body className={`${manrope.variable} ${sourceCodePro.variable} bg-gray-900 text-gray-100`}>
         <AnimatedBackground />
-        <StarsBackground />
-        <CometShower />
         <main>{children}</main>
       </body>
     </html>

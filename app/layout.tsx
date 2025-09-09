@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Manrope, Source_Code_Pro } from "next/font/google";
 
 import "./globals.css";
-import AnimatedBackground from "@/components/ui/AnimatedBackground";
 
 // Google Font
 const manrope = Manrope({
@@ -27,8 +26,7 @@ export default function RootLayout({
 }: React.PropsWithChildren<{}>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${manrope.variable} ${sourceCodePro.variable} bg-gray-900 text-gray-100`}>
-        <AnimatedBackground />
+      <body className={`${manrope.variable} ${sourceCodePro.variable} text-gray-100`}>
         <main>{children}</main>
       </body>
     </html>

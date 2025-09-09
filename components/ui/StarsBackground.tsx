@@ -7,19 +7,20 @@ const StarsBackground = () => {
 
   useEffect(() => {
     const generateStars = () => {
-      const newStars = Array.from({ length: 50 }).map((_, i) => {
+      const newStars = Array.from({ length: 25 }).map((_, i) => { // Reduced count for subtlety
+        const animClass = `animate-[anim-comet-${Math.ceil(Math.random() * 3)}_ease-in-out_infinite]`;
         const style: React.CSSProperties = {
           left: `${Math.random() * 100}%`,
           top: `${Math.random() * 100}%`,
-          width: `${Math.random() * 2 + 1}px`,
-          height: `${Math.random() * 2 + 1}px`,
-          animationDelay: `${Math.random() * 10}s`,
-          animationDuration: `${Math.random() * 5 + 5}s`,
+          width: '2px', // Consistent width
+          height: '150px', // Longer tail
+          animationDelay: `${Math.random() * 15}s`,
+          animationDuration: `${Math.random() * 8 + 5}s`,
         };
         return (
           <div
             key={i}
-            className="absolute bg-gradient-to-r from-white to-transparent rounded-full opacity-80 animate-[anim-star_ease-in-out_infinite]"
+            className={`absolute bg-gradient-to-b from-white/80 to-transparent rounded-full opacity-80 ${animClass}`}
             style={style}
           />
         );
@@ -31,7 +32,7 @@ const StarsBackground = () => {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 w-full h-full -z-20">
+    <div className="fixed top-0 left-0 w-full h-full -z-20 overflow-hidden">
       {stars}
     </div>
   );

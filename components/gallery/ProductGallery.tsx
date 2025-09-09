@@ -11,6 +11,8 @@ import { MOCK_VIDEOS } from '@/lib/constants';
 import { Video } from '@/types/gallery';
 import { Button } from '@/components/ui/Button';
 import { ArrowLeft } from 'lucide-react';
+import { AnimatedLayout } from '@/components/ui/Animation';
+import Header from '@/components/ui/Header';
 
 const VEO3_MODEL_NAME = 'veo-3.0-fast-generate-001';
 
@@ -179,58 +181,58 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ onBack }) => {
     }
   };
 
-  if (isSaving) {
-    return <SavingProgressPage />;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
-      {editingVideo ? (
-        <EditVideoPage
-          video={editingVideo}
-          onSave={handleSaveEdit}
-          onCancel={handleCancelEdit}
-        />
-      ) : (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <header className="py-8 text-center relative">
-            <div className="absolute top-1/2 left-0 -translate-y-1/2">
-              <Button onClick={onBack} variant="secondary">
-                <ArrowLeft className="w-5 h-5" />
-                Back to Studio
-              </Button>
+    <AnimatedLayout>
+      <div className="min-h-[calc(100vh-80px)] bg-gray-900 text-gray-100 font-sans">
+        {isSaving ? <SavingProgressPage /> : (
+          editingVideo ? (
+            <EditVideoPage
+              video={editingVideo}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
+            />
+          ) : (
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <header className="py-8 text-center relative">
+                <div className="absolute top-1/2 left-0 -translate-y-1/2">
+                  <Button onClick={onBack} variant="secondary">
+                    <ArrowLeft className="w-5 h-5" />
+                    Back to Studio
+                  </Button>
+                </div>
+                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text">
+                  Product Gallery
+                </h1>
+                <p className="text-gray-400 mt-2 text-lg max-w-2xl mx-auto">
+                  Explore our collection of AI-generated videos. Click any video to watch it, or select "Edit" to use its prompt as a starting point for your own creation.
+                </p>
+              </header>
+              <main className="pb-8">
+                <VideoGrid videos={videos} onPlayVideo={handlePlayVideo} />
+              </main>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text">
-              Product Gallery
-            </h1>
-            <p className="text-gray-400 mt-2 text-lg max-w-2xl mx-auto">
-              Explore our collection of AI-generated videos. Click any video to watch it, or select "Edit" to use its prompt as a starting point for your own creation.
-            </p>
-          </header>
-          <main className="pb-8">
-            <VideoGrid videos={videos} onPlayVideo={handlePlayVideo} />
-          </main>
-        </div>
-      )}
+          )
+        )}
 
-      {playingVideo && (
-        <VideoPlayer
-          video={playingVideo}
-          onClose={handleClosePlayer}
-          onEdit={handleStartEdit}
-        />
-      )}
+        {playingVideo && (
+          <VideoPlayer
+            video={playingVideo}
+            onClose={handleClosePlayer}
+            onEdit={handleStartEdit}
+          />
+        )}
 
-      {generationError && (
-        <ErrorModal
-          message={generationError}
-          onClose={() => setGenerationError(null)}
-          onSelectKey={async () => {
-            // Handle API key selection - you might want to implement this
-            console.log('API key selection requested');
-          }}
-        />
-      )}
-    </div>
+        {generationError && (
+          <ErrorModal
+            message={generationError}
+            onClose={() => setGenerationError(null)}
+            onSelectKey={async () => {
+              // Handle API key selection - you might want to implement this
+              console.log('API key selection requested');
+            }}
+          />
+        )}
+      </div>
+    </AnimatedLayout>
   );
 };

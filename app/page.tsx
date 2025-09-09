@@ -662,7 +662,6 @@ const VeoStudio: React.FC = () => {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <Header />
         {/* Main content area */}
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] pb-40 px-4">
           {!videoUrl &&

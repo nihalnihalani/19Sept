@@ -13,6 +13,10 @@ import Composer from "@/components/ui/Composer";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductGallery } from "@/components/gallery/ProductGallery";
+import Header from '@/components/ui/Header';
+import { AnimatedLayout } from '@/components/ui/Animation';
+import { motion } from "framer-motion";
+import { Logo } from "@/components/ui/Logo";
 
 type VeoOperationName = string | null;
 
@@ -651,201 +655,261 @@ const VeoStudio: React.FC = () => {
   }
 
   return (
-    <div
-      className="relative min-h-screen w-full text-stone-900"
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {/* Main content area */}
-      <div className="flex flex-col items-center justify-center min-h-screen pb-40 px-4">
-        {!videoUrl &&
-          (isLoadingUI ? (
-            <div className="w-full max-w-3xl">
-              <div className="flex flex-col items-center justify-center gap-3 text-center px-4">
-                {mode === "create-video" ? (
-                  <Film className="w-16 h-16 text-gray-400 animate-pulse" />
-                ) : (
-                  <ImageIcon className="w-16 h-16 text-gray-400 animate-pulse" />
-                )}
-                <div className="inline-flex items-center rounded-full bg-gray-200/70 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700/60 dark:text-gray-200">
-                  {modelLabel}
-                </div>
-                <div className="text-xs text-gray-600 dark:text-gray-300">
-                  {loadingMessages[loadingIndex % loadingMessages.length]}
-                </div>
-                <div className="mt-2 h-1 w-48 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                  <div className="h-full w-full animate-[shimmer_1.6s_infinite] -translate-x-full rounded-full bg-gray-400/70 dark:bg-gray-500/70" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="w-full max-w-3xl">
-              {((mode === "edit-image" && !imageFile && !generatedImage) ||
-                (mode === "create-video" && !imageFile && !generatedImage)) && (
-                <div
-                  className={`rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors ${"bg-white/10 border-gray-300/70 hover:bg-white/30"}`}
-                  onClick={() => {
-                    // Trigger single file input
-                    const input = document.getElementById(
-                      "single-image-input"
-                    ) as HTMLInputElement;
-                    input?.click();
-                  }}
+    <AnimatedLayout>
+      <div
+        className="relative min-h-screen w-full"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <Header />
+        {/* Main content area */}
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] pb-40 px-4">
+          {!videoUrl &&
+            (isLoadingUI ? (
+              <div className="w-full max-w-3xl">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="flex flex-col items-center justify-center gap-4 text-center px-4"
                 >
-                  <div className="flex flex-col items-center gap-3 text-slate-800/80">
-                    <Upload className="w-8 h-8" />
-                    <div className="text-center">
-                      <div className="font-medium text-lg">
-                        Drop an image here, or click to upload
-                      </div>
-                      <div className="text-sm opacity-80 mt-1">
-                        PNG, JPG, WEBP up to 10MB
-                      </div>
-                      {mode === "edit-image" &&
-                        (imageFile || generatedImage) && (
-                          <div className="text-sm mt-2 text-green-600">
-                            ✓ Image selected
-                          </div>
-                        )}
-
-                      {mode === "create-video" &&
-                        (imageFile || generatedImage) && (
-                          <div className="text-sm mt-2 text-green-600">
-                            ✓ Image selected for video generation
-                          </div>
-                        )}
-                    </div>
+                  <Logo className="w-16 h-16 animate-pulse" />
+                  <div className="inline-flex items-center rounded-full bg-gray-700/80 px-4 py-2 text-sm font-medium text-gray-200">
+                    {modelLabel}
                   </div>
-                </div>
-              )}
-
-              {mode === "edit-image" && imageFile && uploadedImageUrl && (
-                <div className="w-full max-w-4xl aspect-video overflow-hidden rounded-lg border relative mx-auto">
-                  <Image
-                    src={uploadedImageUrl}
-                    alt="Uploaded for editing"
-                    className="w-full h-full object-contain"
-                    width={800}
-                    height={450}
-                  />
-                </div>
-              )}
-
-              {!(
-                mode === "edit-image" ||
-                mode === "compose-image" ||
-                mode === "create-video"
-              ) && (
-                <div className="text-stone-400 select-none text-center w-full">
-                  Nothing to see here
-                </div>
-              )}
-
-              {/* Hidden file inputs - always available */}
-              <input
-                id="single-image-input"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onPickImage}
-              />
-              <input
-                id="multiple-image-input"
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={onPickMultipleImages}
-              />
-
-              {/* Compose mode initial state when no generated image */}
-              {mode === "compose-image" && !generatedImage && (
-                <div className="w-full mt-8 flex justify-center">
-                  <div className="max-w-3xl">
-                    <div className="text-center text-slate-600 mb-6">
-                      <div className="text-lg font-medium mb-2">
-                        Compose Multiple Images
-                      </div>
-                      <div className="text-sm opacity-80">
-                        Upload multiple images to combine them into a single
-                        composition
-                      </div>
-                    </div>
-
-                    {/* Upload area for compose mode */}
+                  <p className="text-gray-400">
+                    {loadingMessages[loadingIndex % loadingMessages.length]}
+                  </p>
+                  <div className="mt-2 h-2 w-56 overflow-hidden rounded-full bg-gray-800 border border-gray-700">
+                    <motion.div 
+                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-yellow-400"
+                      initial={{ x: "-100%" }}
+                      animate={{ x: "0%" }}
+                      transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+                    />
+                  </div>
+                </motion.div>
+              </div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                className="w-full max-w-3xl text-center"
+              >
+                {/* Improved Empty State */}
+                <div className="bg-gray-800/50 p-8 rounded-2xl border border-gray-700">
+                  <h2 className="text-2xl font-bold text-gray-100 mb-2">Welcome to Alchemy Studio</h2>
+                  <p className="text-gray-400 mb-6">What would you like to create today?</p>
+                  
+                  {((mode === "edit-image" || mode === "create-video") && !imageFile && !generatedImage) && (
                     <div
                       className={`rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors ${"bg-white/10 border-gray-300/70 hover:bg-white/30"}`}
                       onClick={() => {
-                        const input = document.getElementById(
-                          "multiple-image-input"
-                        ) as HTMLInputElement;
+                        const input = document.getElementById("single-image-input") as HTMLInputElement;
                         input?.click();
                       }}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
                     >
-                      <div className="flex flex-col items-center gap-3 text-slate-800/80">
+                      <div className="flex flex-col items-center gap-3 text-gray-400">
                         <Upload className="w-8 h-8" />
-                        <div className="text-center">
-                          <div className="font-medium text-lg">
-                            Drop multiple images here, or click to upload
-                          </div>
-                          <div className="text-sm opacity-80 mt-1">
-                            PNG, JPG, WEBP up to 10MB each (max 10 images)
-                          </div>
-                          {multipleImageFiles.length > 0 && (
-                            <div className="text-sm mt-2 text-green-600">
-                              ✓ {multipleImageFiles.length} image
-                              {multipleImageFiles.length > 1 ? "s" : ""}{" "}
-                              selected{" "}
-                              {multipleImageFiles.length >= 10
-                                ? "(max reached)"
-                                : ""}
-                            </div>
-                          )}
+                        <div className="font-medium text-lg text-gray-200">
+                          Drop an image here, or click to upload
+                        </div>
+                        <div className="text-sm opacity-80 mt-1">
+                          For Image Editing or Video Generation
                         </div>
                       </div>
                     </div>
+                  )}
+                </div>
 
-                    {/* Thumbnails below dropzone */}
-                    {multipleImageFiles.length > 0 && (
-                      <div className="mt-6">
-                        <div className="flex flex-wrap gap-4 justify-center">
-                          {multipleImageFiles.map((file, index) => (
-                            <div
-                              key={index}
-                              className="w-28 h-28 rounded-lg overflow-hidden border-2 border-white/30 shadow-md"
-                              title={file.name}
-                            >
-                              <Image
-                                src={URL.createObjectURL(file)}
-                                alt={`Preview ${index + 1}`}
-                                className="w-full h-full object-cover"
-                                width={112}
-                                height={112}
-                              />
-                            </div>
-                          ))}
+                {!(
+                  mode === "edit-image" ||
+                  mode === "compose-image" ||
+                  mode === "create-video"
+                ) && (
+                  <div className="text-gray-500 select-none text-center w-full mt-8">
+                    Select a mode below to get started
+                  </div>
+                )}
+
+                {/* Hidden file inputs - always available */}
+                <input
+                  id="single-image-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={onPickImage}
+                />
+                <input
+                  id="multiple-image-input"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={onPickMultipleImages}
+                />
+
+                {/* Compose mode initial state when no generated image */}
+                {mode === "compose-image" && !generatedImage && (
+                  <div className="w-full mt-8 flex justify-center">
+                    <div className="max-w-3xl">
+                      <div className="text-center text-slate-600 mb-6">
+                        <div className="text-lg font-medium mb-2">
+                          Compose Multiple Images
+                        </div>
+                        <div className="text-sm opacity-80">
+                          Upload multiple images to combine them into a single
+                          composition
                         </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
 
-        {generatedImage &&
-          !videoUrl &&
-          !(mode === "create-video" && isLoadingUI) && (
-            <div className="w-full max-w-5xl mx-auto">
-              {mode === "compose-image" ? (
-                /* Compose mode: Image on top, upload area below */
-                <div className="flex flex-col gap-6 items-center">
-                  <div className="w-full max-w-2xl relative">
-                    <div className="aspect-video overflow-hidden rounded-lg border">
+                      {/* Upload area for compose mode */}
+                      <div
+                        className={`rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors ${"bg-white/10 border-gray-300/70 hover:bg-white/30"}`}
+                        onClick={() => {
+                          const input = document.getElementById(
+                            "multiple-image-input"
+                          ) as HTMLInputElement;
+                          input?.click();
+                        }}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
+                        <div className="flex flex-col items-center gap-3 text-slate-800/80">
+                          <Upload className="w-8 h-8" />
+                          <div className="text-center">
+                            <div className="font-medium text-lg">
+                              Drop multiple images here, or click to upload
+                            </div>
+                            <div className="text-sm opacity-80 mt-1">
+                              PNG, JPG, WEBP up to 10MB each (max 10 images)
+                            </div>
+                            {multipleImageFiles.length > 0 && (
+                              <div className="text-sm mt-2 text-green-600">
+                                ✓ {multipleImageFiles.length} image
+                                {multipleImageFiles.length > 1 ? "s" : ""}{" "}
+                                selected{" "}
+                                {multipleImageFiles.length >= 10
+                                  ? "(max reached)"
+                                  : ""}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Thumbnails below dropzone */}
+                      {multipleImageFiles.length > 0 && (
+                        <div className="mt-6">
+                          <div className="flex flex-wrap gap-4 justify-center">
+                            {multipleImageFiles.map((file, index) => (
+                              <div
+                                key={index}
+                                className="w-28 h-28 rounded-lg overflow-hidden border-2 border-white/30 shadow-md"
+                                title={file.name}
+                              >
+                                <Image
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Preview ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  width={112}
+                                  height={112}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+
+          {generatedImage &&
+            !videoUrl &&
+            !(mode === "create-video" && isLoadingUI) && (
+              <div className="w-full max-w-5xl mx-auto">
+                {mode === "compose-image" ? (
+                  /* Compose mode: Image on top, upload area below */
+                  <div className="flex flex-col gap-6 items-center">
+                    <div className="w-full max-w-2xl relative">
+                      <div className="aspect-video overflow-hidden rounded-lg border">
+                        <Image
+                          src={generatedImage}
+                          alt="Generated"
+                          className="w-full h-full object-contain"
+                          width={800}
+                          height={450}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4 w-full max-w-md">
+                      <h4 className="text-sm font-medium text-slate-700 text-center">
+                        Add More Images to Compose
+                      </h4>
+                      {/* Status indicator */}
+                      <div className="text-xs text-center -mt-2 mb-2">
+                        {(imageFile || generatedImage) && (
+                          <div className="text-blue-600">
+                            ✓ Existing image will be included
+                          </div>
+                        )}
+                      </div>
+                      <div
+                        className="rounded-lg border-2 border-dashed p-6 cursor-pointer transition-colors bg-white/10 border-gray-300/70 hover:bg-white/30"
+                        onClick={() => {
+                          const input = document.getElementById(
+                            "multiple-image-input"
+                          ) as HTMLInputElement;
+                          input?.click();
+                        }}
+                      >
+                        <div className="flex flex-col items-center gap-2 text-slate-800/80">
+                          <Upload className="w-6 h-6" />
+                          <div className="text-center">
+                            <div className="font-medium text-sm">
+                              Drop images here or click to add
+                            </div>
+                            <div className="text-xs opacity-80">
+                              PNG, JPG, WEBP up to 10MB each
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Show thumbnails of additional images */}
+                      {multipleImageFiles.length > 0 && (
+                        <div className="mt-4">
+                          <div className="flex flex-wrap gap-2 justify-center max-w-xs mx-auto">
+                            {multipleImageFiles.map((file, index) => (
+                              <div
+                                key={index}
+                                className="w-20 h-20 rounded-lg overflow-hidden border-2 border-white/30 shadow-sm"
+                                title={file.name}
+                              >
+                                <Image
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Preview ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  width={80}
+                                  height={80}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Other modes: Image centered */
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="w-full max-w-4xl aspect-video overflow-hidden rounded-lg border relative">
                       <Image
                         src={generatedImage}
                         alt="Generated"
@@ -855,120 +919,49 @@ const VeoStudio: React.FC = () => {
                       />
                     </div>
                   </div>
+                )}
+              </div>
+            )}
 
-                  <div className="flex flex-col gap-4 w-full max-w-md">
-                    <h4 className="text-sm font-medium text-slate-700 text-center">
-                      Add More Images to Compose
-                    </h4>
-                    {/* Status indicator */}
-                    <div className="text-xs text-center -mt-2 mb-2">
-                      {(imageFile || generatedImage) && (
-                        <div className="text-blue-600">
-                          ✓ Existing image will be included
-                        </div>
-                      )}
-                    </div>
-                    <div
-                      className="rounded-lg border-2 border-dashed p-6 cursor-pointer transition-colors bg-white/10 border-gray-300/70 hover:bg-white/30"
-                      onClick={() => {
-                        const input = document.getElementById(
-                          "multiple-image-input"
-                        ) as HTMLInputElement;
-                        input?.click();
-                      }}
-                    >
-                      <div className="flex flex-col items-center gap-2 text-slate-800/80">
-                        <Upload className="w-6 h-6" />
-                        <div className="text-center">
-                          <div className="font-medium text-sm">
-                            Drop images here or click to add
-                          </div>
-                          <div className="text-xs opacity-80">
-                            PNG, JPG, WEBP up to 10MB each
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Show thumbnails of additional images */}
-                    {multipleImageFiles.length > 0 && (
-                      <div className="mt-4">
-                        <div className="flex flex-wrap gap-2 justify-center max-w-xs mx-auto">
-                          {multipleImageFiles.map((file, index) => (
-                            <div
-                              key={index}
-                              className="w-20 h-20 rounded-lg overflow-hidden border-2 border-white/30 shadow-sm"
-                              title={file.name}
-                            >
-                              <Image
-                                src={URL.createObjectURL(file)}
-                                alt={`Preview ${index + 1}`}
-                                className="w-full h-full object-cover"
-                                width={80}
-                                height={80}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                /* Other modes: Image centered */
-                <div className="flex flex-col items-center gap-6">
-                  <div className="w-full max-w-4xl aspect-video overflow-hidden rounded-lg border relative">
-                    <Image
-                      src={generatedImage}
-                      alt="Generated"
-                      className="w-full h-full object-contain"
-                      width={800}
-                      height={450}
-                    />
-                  </div>
-                </div>
-              )}
+          {videoUrl && (
+            <div className="w-full max-w-3xl mx-auto">
+              <div className="flex flex-col items-center gap-6">
+                {/* Video in center */}
+                <VideoPlayer
+                  src={videoUrl}
+                  onOutputChanged={handleTrimmedOutput}
+                  onDownload={downloadVideo}
+                  onResetTrim={handleResetTrimState}
+                />
+              </div>
             </div>
           )}
+        </div>
 
-        {videoUrl && (
-          <div className="w-full max-w-3xl mx-auto">
-            <div className="flex flex-col items-center gap-6">
-              {/* Video in center */}
-              <VideoPlayer
-                src={videoUrl}
-                onOutputChanged={handleTrimmedOutput}
-                onDownload={downloadVideo}
-                onResetTrim={handleResetTrimState}
-              />
-            </div>
-          </div>
-        )}
+        <Composer
+          mode={mode}
+          setMode={setMode}
+          hasGeneratedImage={!!generatedImage}
+          hasVideoUrl={!!videoUrl}
+          prompt={prompt}
+          setPrompt={setPrompt}
+          selectedModel={selectedModel}
+          setSelectedModel={setSelectedModel}
+          canStart={canStart}
+          isGenerating={isGenerating}
+          startGeneration={startGeneration}
+          imagePrompt={imagePrompt}
+          setImagePrompt={setImagePrompt}
+          editPrompt={editPrompt}
+          setEditPrompt={setEditPrompt}
+          composePrompt={composePrompt}
+          setComposePrompt={setComposePrompt}
+          geminiBusy={geminiBusy}
+          resetAll={resetAll}
+          downloadImage={downloadImage}
+        />
       </div>
-
-      <Composer
-        mode={mode}
-        setMode={setMode}
-        hasGeneratedImage={!!generatedImage}
-        hasVideoUrl={!!videoUrl}
-        prompt={prompt}
-        setPrompt={setPrompt}
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
-        canStart={canStart}
-        isGenerating={isGenerating}
-        startGeneration={startGeneration}
-        imagePrompt={imagePrompt}
-        setImagePrompt={setImagePrompt}
-        editPrompt={editPrompt}
-        setEditPrompt={setEditPrompt}
-        composePrompt={composePrompt}
-        setComposePrompt={setComposePrompt}
-        geminiBusy={geminiBusy}
-        resetAll={resetAll}
-        downloadImage={downloadImage}
-      />
-    </div>
+    </AnimatedLayout>
   );
 };
 

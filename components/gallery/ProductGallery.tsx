@@ -186,17 +186,16 @@ export const ProductGallery: React.FC = () => {
           onCancel={handleCancelEdit}
         />
       ) : (
-        <div className="mx-auto max-w-[1080px]">
-          <header className="p-6 md:p-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text inline-flex items-center gap-4">
-              <VideoCameraIcon className="w-10 h-10 md:w-12 md:h-12" />
-              <span>Product Gallery</span>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <header className="py-8 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text">
+              Product Gallery
             </h1>
-            <p className="text-gray-400 mt-2 text-lg">
-              Select a video to generate your own variations
+            <p className="text-gray-400 mt-2 text-lg max-w-2xl mx-auto">
+              Explore our collection of AI-generated videos. Click any video to watch it, or select "Edit" to use its prompt as a starting point for your own creation.
             </p>
           </header>
-          <main className="px-4 md:px-8 pb-8">
+          <main className="pb-8">
             <VideoGrid videos={videos} onPlayVideo={handlePlayVideo} />
           </main>
         </div>

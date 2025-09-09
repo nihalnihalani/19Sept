@@ -23,7 +23,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       aria-modal="true"
       role="dialog">
       <div
-        className="bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl relative overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-gray-800/90 backdrop-blur-sm border border-gray-700 rounded-lg shadow-2xl w-full max-w-4xl relative overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex-shrink-0 p-2 sm:p-4">
           <button
@@ -46,12 +46,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         </div>
         <div className="flex-1 p-4 pt-2 overflow-y-auto">
           <div className="flex justify-between items-start gap-4">
-            <p className="text-sm text-gray-400 mt-0 whitespace-pre-wrap flex-1">
+            <p className="text-sm text-gray-300 mt-0 whitespace-pre-wrap flex-1">
               {video.description}
             </p>
             <button
               onClick={() => onEdit(video)}
-              className="flex-shrink-0 flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm"
+              className="flex-shrink-0 flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm shadow-md"
               aria-label="Edit video details">
               <PencilSquareIcon className="w-5 h-5" />
               <span className="hidden sm:inline">Edit</span>

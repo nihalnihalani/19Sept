@@ -133,12 +133,12 @@ const Composer: React.FC<ComposerProps> = ({
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 w-[min(100%,56rem)] px-4">
-      <div className="relative text-slate-900/80 backdrop-blur-sm bg-white/30 px-6 py-4 rounded-xl shadow-lg border border-white/20">
+      <div className="relative text-slate-900/80 backdrop-blur-xl bg-gray-800/60 px-6 py-4 rounded-2xl shadow-lg border border-gray-700">
         {hasGeneratedImage && !hasVideoUrl && (
-          <div className="absolute -top-12 right-0 z-10">
+          <div className="absolute -top-14 right-0 z-10">
             <button
               onClick={downloadImage}
-              className="inline-flex items-center gap-2 bg-white/30 hover:bg-white text-slate-700 py-2 px-4 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors shadow-md"
               title="Download Image"
             >
               <Download className="w-4 h-4" />
@@ -160,7 +160,7 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Generate a video with text and frames..."
-            className="w-full bg-white/20 focus:bg-white/30 focus:outline-none resize-none text-base font-normal placeholder-slate-800/60 rounded-lg px-4 py-3 border border-white/30 focus:border-white/50 transition-all duration-200"
+            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
             rows={3}
           />
         )}
@@ -171,7 +171,7 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setImagePrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe the image to create..."
-            className="w-full bg-white/20 focus:bg-white/30 focus:outline-none resize-none text-base font-normal placeholder-slate-800/60 rounded-lg px-4 py-3 border border-white/30 focus:border-white/50 transition-all duration-200"
+            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
             rows={3}
           />
         )}
@@ -182,7 +182,7 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setEditPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe how to edit the image..."
-            className="w-full bg-white/20 focus:bg-white/30 focus:outline-none resize-none text-base font-normal placeholder-slate-800/60 rounded-lg px-4 py-3 border border-white/30 focus:border-white/50 transition-all duration-200"
+            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
             rows={3}
           />
         )}
@@ -193,7 +193,7 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setComposePrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe how to combine the images..."
-            className="w-full bg-white/20 focus:bg-white/30 focus:outline-none resize-none text-base font-normal placeholder-slate-800/60 rounded-lg px-4 py-3 border border-white/30 focus:border-white/50 transition-all duration-200"
+            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
             rows={3}
           />
         )}
@@ -202,20 +202,20 @@ const Composer: React.FC<ComposerProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handleReset}
-              className="h-10 w-10 flex items-center justify-center bg-white/50 rounded-full hover:bg-white/70 cursor-pointer"
+              className="h-10 w-10 flex items-center justify-center bg-gray-700/80 rounded-full hover:bg-gray-600/90 cursor-pointer transition-colors"
               title="Reset"
             >
-              <RotateCcw className="w-5 h-5" />
+              <RotateCcw className="w-5 h-5 text-gray-300" />
             </button>
           </div>
           <button
             onClick={startGeneration}
             disabled={!canStart || isGenerating || geminiBusy}
             aria-busy={isGenerating || geminiBusy}
-            className={`h-10 w-10 flex items-center justify-center rounded-full text-white transition ${
+            className={`h-10 w-10 flex items-center justify-center rounded-full text-white transition-all duration-300 ${
               !canStart || isGenerating || geminiBusy
-                ? "bg-white/50 cursor-not-allowed"
-                : "bg-white/50 hover:bg-white/70 cursor-pointer"
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700 hover:scale-110 cursor-pointer"
             }`}
             title={
               mode === "create-image"
@@ -228,15 +228,15 @@ const Composer: React.FC<ComposerProps> = ({
             }
           >
             {isGenerating || geminiBusy ? (
-              <div className="w-4 h-4 border-2 border-t-transparent border-black rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
             ) : (
-              <Sparkles className="w-5 h-5 text-black" />
+              <Sparkles className="w-5 h-5 text-white" />
             )}
           </button>
         </div>
 
         {/* Mode Badges */}
-        <div className="flex gap-1 mt-4 bg-white/10 rounded-lg p-1.5 border border-white/20">
+        <div className="flex gap-1 mt-4 bg-gray-900/70 rounded-lg p-1.5 border border-gray-700">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -244,12 +244,12 @@ const Composer: React.FC<ComposerProps> = ({
                   !isTabDisabled("create-image") && setMode("create-image")
                 }
                 disabled={isTabDisabled("create-image")}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition flex-1 ${
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-all duration-200 flex-1 ${
                   mode === "create-image"
-                    ? "bg-indigo-400/30 text-slate-900 backdrop-blur-sm"
+                    ? "bg-purple-600/50 text-white shadow-inner"
                     : isTabDisabled("create-image")
-                    ? "text-slate-400 cursor-not-allowed opacity-50"
-                    : "text-slate-700 hover:bg-white/30 hover:text-slate-900"
+                    ? "text-gray-500 cursor-not-allowed opacity-60"
+                    : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
                 }`}
               >
                 <Image className="w-4 h-4" aria-hidden="true" />
@@ -269,12 +269,12 @@ const Composer: React.FC<ComposerProps> = ({
                   !isTabDisabled("edit-image") && setMode("edit-image")
                 }
                 disabled={isTabDisabled("edit-image")}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition flex-1 ${
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-all duration-200 flex-1 ${
                   mode === "edit-image"
-                    ? "bg-blue-400/30 text-slate-900 backdrop-blur-sm"
+                    ? "bg-purple-600/50 text-white shadow-inner"
                     : isTabDisabled("edit-image")
-                    ? "text-slate-400 cursor-not-allowed opacity-50"
-                    : "text-slate-700 hover:bg-white/30 hover:text-slate-900"
+                    ? "text-gray-500 cursor-not-allowed opacity-60"
+                    : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
                 }`}
               >
                 <Edit className="w-4 h-4" />
@@ -294,12 +294,12 @@ const Composer: React.FC<ComposerProps> = ({
                   !isTabDisabled("compose-image") && setMode("compose-image")
                 }
                 disabled={isTabDisabled("compose-image")}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition flex-1 ${
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-all duration-200 flex-1 ${
                   mode === "compose-image"
-                    ? "bg-green-400/30 text-slate-900 backdrop-blur-sm"
+                    ? "bg-purple-600/50 text-white shadow-inner"
                     : isTabDisabled("compose-image")
-                    ? "text-slate-400 cursor-not-allowed opacity-50"
-                    : "text-slate-700 hover:bg-white/30 hover:text-slate-900"
+                    ? "text-gray-500 cursor-not-allowed opacity-60"
+                    : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
                 }`}
               >
                 <Palette className="w-4 h-4" />
@@ -319,12 +319,12 @@ const Composer: React.FC<ComposerProps> = ({
                   !isTabDisabled("create-video") && setMode("create-video")
                 }
                 disabled={isTabDisabled("create-video")}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition flex-1 ${
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-all duration-200 flex-1 ${
                   mode === "create-video"
-                    ? "bg-purple-400/30 text-slate-900 backdrop-blur-sm"
+                    ? "bg-purple-600/50 text-white shadow-inner"
                     : isTabDisabled("create-video")
-                    ? "text-slate-400 cursor-not-allowed opacity-50"
-                    : "text-slate-700 hover:bg-white/30 hover:text-slate-900"
+                    ? "text-gray-500 cursor-not-allowed opacity-60"
+                    : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
                 }`}
               >
                 <Video className="w-4 h-4" />
@@ -341,10 +341,10 @@ const Composer: React.FC<ComposerProps> = ({
             <TooltipTrigger asChild>
               <button
                 onClick={() => setMode("product-gallery")}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition flex-1 ${
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-all duration-200 flex-1 ${
                   mode === "product-gallery"
-                    ? "bg-orange-400/30 text-slate-900 backdrop-blur-sm"
-                    : "text-slate-700 hover:bg-white/30 hover:text-slate-900"
+                    ? "bg-purple-600/50 text-white shadow-inner"
+                    : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
                 }`}
               >
                 <Grid3X3 className="w-4 h-4" />

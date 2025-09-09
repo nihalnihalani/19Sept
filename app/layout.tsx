@@ -17,10 +17,10 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Gemini API Studio",
-  description: "A quickstart for the Gemini API with Veo 3",
+  title: "Alchemy Studio",
+  description: "An AI-powered studio for media generation",
   icons: {
-    icon: "/imgs/gemini_icon.svg",
+    icon: "/imgs/gemini_icon.svg", // This could be updated to a new logo file if available
   },
 };
 
@@ -30,11 +30,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${manrope.variable} ${sourceCodePro.variable}`}>
-        <div className="bg-gray-200 text-stone-900">
-          <main>{children}</main>
-        </div>
+    <html lang="en" className="dark">
+      <body className={`${manrope.variable} ${sourceCodePro.variable} bg-gray-900 text-gray-100`}>
+        <main>{children}</main>
       </body>
     </html>
   );

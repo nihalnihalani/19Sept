@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import React from 'react';
 import { Video } from '@/types/gallery';
 import { PlayIcon } from './icons';
@@ -12,9 +13,12 @@ interface VideoCardProps {
  */
 export const VideoCard: React.FC<VideoCardProps> = ({ video, onPlay }) => {
   return (
-    <button
+    <motion.button
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
       type="button"
-      className="group w-full text-left bg-gray-800/50 rounded-lg overflow-hidden shadow-lg hover:shadow-gray-500/30 transform transition-all duration-300 hover:-translate-y-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+      className="group w-full text-left bg-gray-800/50 rounded-lg overflow-hidden shadow-lg hover:shadow-purple-500/20 transform transition-all duration-300 hover:-translate-y-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 border border-gray-700 hover:border-purple-500/50"
       onClick={() => onPlay(video)}
       aria-label={`Play video: ${video.title}`}>
       <div className="relative">
@@ -25,7 +29,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onPlay }) => {
           playsInline
           preload="metadata"
           aria-hidden="true"></video>
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <PlayIcon className="w-16 h-16 text-white opacity-80 drop-shadow-lg group-hover:opacity-100 transform group-hover:scale-110 transition-transform" />
         </div>
       </div>
@@ -36,6 +40,6 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onPlay }) => {
           {video.title}
         </h3>
       </div>
-    </button>
+    </motion.button>
   );
 };

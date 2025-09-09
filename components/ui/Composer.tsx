@@ -132,8 +132,8 @@ const Composer: React.FC<ComposerProps> = ({
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 w-[min(100%,48rem)] px-4">
-      <div className="relative text-slate-900/80 backdrop-blur-sm bg-white/30 px-3 py-1 rounded-lg ">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 w-[min(100%,56rem)] px-4">
+      <div className="relative text-slate-900/80 backdrop-blur-sm bg-white/30 px-6 py-4 rounded-xl shadow-lg border border-white/20">
         {hasGeneratedImage && !hasVideoUrl && (
           <div className="absolute -top-12 right-0 z-10">
             <button
@@ -146,7 +146,7 @@ const Composer: React.FC<ComposerProps> = ({
             </button>
           </div>
         )}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <ModelSelector
             selectedModel={selectedModel}
             setSelectedModel={setSelectedModel}
@@ -160,8 +160,8 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Generate a video with text and frames..."
-            className="w-full bg-transparent focus:outline-none resize-none text-base font-normal placeholder-slate-800/60"
-            rows={2}
+            className="w-full bg-white/20 focus:bg-white/30 focus:outline-none resize-none text-base font-normal placeholder-slate-800/60 rounded-lg px-4 py-3 border border-white/30 focus:border-white/50 transition-all duration-200"
+            rows={3}
           />
         )}
 
@@ -171,8 +171,8 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setImagePrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe the image to create..."
-            className="w-full bg-transparent focus:outline-none resize-none text-base font-normal placeholder-slate-800/60"
-            rows={2}
+            className="w-full bg-white/20 focus:bg-white/30 focus:outline-none resize-none text-base font-normal placeholder-slate-800/60 rounded-lg px-4 py-3 border border-white/30 focus:border-white/50 transition-all duration-200"
+            rows={3}
           />
         )}
 
@@ -182,8 +182,8 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setEditPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe how to edit the image..."
-            className="w-full bg-transparent focus:outline-none resize-none text-base font-normal placeholder-slate-800/60"
-            rows={2}
+            className="w-full bg-white/20 focus:bg-white/30 focus:outline-none resize-none text-base font-normal placeholder-slate-800/60 rounded-lg px-4 py-3 border border-white/30 focus:border-white/50 transition-all duration-200"
+            rows={3}
           />
         )}
 
@@ -193,12 +193,12 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setComposePrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe how to combine the images..."
-            className="w-full bg-transparent focus:outline-none resize-none text-base font-normal placeholder-slate-800/60"
-            rows={2}
+            className="w-full bg-white/20 focus:bg-white/30 focus:outline-none resize-none text-base font-normal placeholder-slate-800/60 rounded-lg px-4 py-3 border border-white/30 focus:border-white/50 transition-all duration-200"
+            rows={3}
           />
         )}
 
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-2">
             <button
               onClick={handleReset}
@@ -236,7 +236,7 @@ const Composer: React.FC<ComposerProps> = ({
         </div>
 
         {/* Mode Badges */}
-        <div className="flex gap-1 mt-3 bg-white/10 rounded-md p-1 border border-white/20">
+        <div className="flex gap-1 mt-4 bg-white/10 rounded-lg p-1.5 border border-white/20">
           <Tooltip>
             <TooltipTrigger asChild>
               <button

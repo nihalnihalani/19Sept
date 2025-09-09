@@ -178,9 +178,11 @@ body {
 /* Shooting Stars Animation */
 @keyframes anim-star {
   from {
-    transform: translateY(0px);
+    transform: translate(-50vw, -50vh) rotate(215deg);
+    opacity: 1;
   }
   to {
-    transform: translateY(-2000px);
+    transform: translate(50vw, 50vh) rotate(215deg);
+    opacity: 0;
   }
 }

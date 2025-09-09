@@ -160,7 +160,7 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Generate a video with text and frames..."
-            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
+            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal text-gray-200 placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
             rows={3}
           />
         )}
@@ -171,7 +171,7 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setImagePrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe the image to create..."
-            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
+            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal text-gray-200 placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
             rows={3}
           />
         )}
@@ -182,7 +182,7 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setEditPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe how to edit the image..."
-            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
+            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal text-gray-200 placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
             rows={3}
           />
         )}
@@ -193,7 +193,7 @@ const Composer: React.FC<ComposerProps> = ({
             onChange={(e) => setComposePrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Describe how to combine the images..."
-            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
+            className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal text-gray-200 placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
             rows={3}
           />
         )}

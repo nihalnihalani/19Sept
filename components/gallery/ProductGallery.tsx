@@ -9,6 +9,8 @@ import { VideoGrid } from './VideoGrid';
 import { VideoPlayer } from './VideoPlayer';
 import { MOCK_VIDEOS } from '@/lib/constants';
 import { Video } from '@/types/gallery';
+import { Button } from '@/components/ui/Button';
+import { ArrowLeft } from 'lucide-react';
 
 const VEO3_MODEL_NAME = 'veo-3.0-fast-generate-001';
 
@@ -105,11 +107,15 @@ async function generateVideoFromText(
   }
 }
 
+interface ProductGalleryProps {
+  onBack: () => void;
+}
+
 /**
  * Main component for the Product Gallery.
  * It manages the state of videos, playing videos, editing videos and error handling.
  */
-export const ProductGallery: React.FC = () => {
+export const ProductGallery: React.FC<ProductGalleryProps> = ({ onBack }) => {
   const [videos, setVideos] = useState<Video[]>(MOCK_VIDEOS);
   const [playingVideo, setPlayingVideo] = useState<Video | null>(null);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
@@ -187,7 +193,13 @@ export const ProductGallery: React.FC = () => {
         />
       ) : (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <header className="py-8 text-center">
+          <header className="py-8 text-center relative">
+            <div className="absolute top-1/2 left-0 -translate-y-1/2">
+              <Button onClick={onBack} variant="secondary">
+                <ArrowLeft className="w-5 h-5" />
+                Back to Studio
+              </Button>
+            </div>
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text">
               Product Gallery
             </h1>

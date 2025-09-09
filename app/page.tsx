@@ -651,7 +651,7 @@ const VeoStudio: React.FC = () => {
 
   // If in product gallery mode, render the gallery component
   if (mode === "product-gallery") {
-    return <ProductGallery />;
+    return <ProductGallery onBack={() => setMode('create-image')} />;
   }
 
   return (

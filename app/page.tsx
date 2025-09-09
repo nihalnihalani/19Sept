@@ -12,6 +12,7 @@ import { Upload, Film, Image as ImageIcon } from "lucide-react";
 import Composer from "@/components/ui/Composer";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductGallery } from "@/components/gallery/ProductGallery";
 
 type VeoOperationName = string | null;
 
@@ -19,7 +20,8 @@ type StudioMode =
   | "create-image"
   | "edit-image"
   | "compose-image"
-  | "create-video";
+  | "create-video"
+  | "product-gallery";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -642,6 +644,11 @@ const VeoStudio: React.FC = () => {
       }
     }
   };
+
+  // If in product gallery mode, render the gallery component
+  if (mode === "product-gallery") {
+    return <ProductGallery />;
+  }
 
   return (
     <div

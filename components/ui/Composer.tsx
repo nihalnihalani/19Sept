@@ -9,6 +9,7 @@ import {
   Video,
   Download,
   Sparkles,
+  Grid3X3,
 } from "lucide-react";
 import ModelSelector from "@/components/ui/ModelSelector";
 import {
@@ -21,7 +22,8 @@ type StudioMode =
   | "create-image"
   | "edit-image"
   | "compose-image"
-  | "create-video";
+  | "create-video"
+  | "product-gallery";
 
 interface ComposerProps {
   mode: StudioMode;
@@ -96,6 +98,8 @@ const Composer: React.FC<ComposerProps> = ({
         return "Compose Image";
       case "create-video":
         return "Create Video";
+      case "product-gallery":
+        return "Product Gallery";
       default:
         return "Unknown";
     }
@@ -332,6 +336,24 @@ const Composer: React.FC<ComposerProps> = ({
                 <p>{getTabTooltip("create-video")}</p>
               </TooltipContent>
             )}
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setMode("product-gallery")}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition flex-1 ${
+                  mode === "product-gallery"
+                    ? "bg-orange-400/30 text-slate-900 backdrop-blur-sm"
+                    : "text-slate-700 hover:bg-white/30 hover:text-slate-900"
+                }`}
+              >
+                <Grid3X3 className="w-4 h-4" />
+                {getTabText("product-gallery")}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Browse and remix video gallery</p>
+            </TooltipContent>
           </Tooltip>
         </div>
       </div>

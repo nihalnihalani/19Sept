@@ -107,18 +107,10 @@ kill_port_processes() {
     pids=$(lsof -ti tcp:"$port" 2>/dev/null)
     
     if [[ -n "$pids" ]]; then
-        print_warning "Port $port is in use by processes: $pids"
-        echo -n "Kill these processes? [y/N]: "
-        read -r response
-        
-        if [[ "$response" =~ ^[Yy]$ ]]; then
-            echo "$pids" | xargs kill -9 2>/dev/null
-            print_success "Killed processes using port $port"
-            sleep 1
-        else
-            print_error "Cannot start application - port $port is in use"
-            return 1
-        fi
+        print_warning "Port $port is in use by processes: $pids"        
+        echo "$pids" | xargs kill -9 2>/dev/null
+        print_success "Killed processes using port $port"
+        sleep 1
     fi
     return 0
 }

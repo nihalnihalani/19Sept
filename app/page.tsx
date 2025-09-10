@@ -8,14 +8,15 @@ import React, {
   useState,
 } from "react";
 import Image from "next/image";
-import { Upload } from "lucide-react";
-import Composer from "@/components/ui/Composer";
-import VideoPlayer from "@/components/ui/VideoPlayer";
-import { ProductGallery } from "@/components/gallery/ProductGallery";
-import { AnimatedLayout } from '@/components/ui/Animation';
+import { Upload, Download } from "lucide-react";
+import Gallery from "@/components/gallery/Gallery";
+
+
+
+
 import { motion } from "framer-motion";
-import Logo from "@/components/ui/Logo";
-import { StudioMode } from "@/types/studio";
+
+import { StudioMode } from "@/lib/types";
 
 type VeoOperationName = string | null;
 
@@ -537,25 +538,26 @@ const VeoStudio: React.FC = () => {
     }
   };
 
-  const handleTrimmedOutput = (blob: Blob) => {
-    trimmedBlobRef.current = blob; // likely webm
-    if (trimmedUrlRef.current) {
-      URL.revokeObjectURL(trimmedUrlRef.current);
-    }
-    trimmedUrlRef.current = URL.createObjectURL(blob);
-    setVideoUrl(trimmedUrlRef.current);
-  };
+  // Video trimming functions (currently unused)
+  // const handleTrimmedOutput = (blob: Blob) => {
+  //   trimmedBlobRef.current = blob; // likely webm
+  //   if (trimmedUrlRef.current) {
+  //     URL.revokeObjectURL(trimmedUrlRef.current);
+  //   }
+  //   trimmedUrlRef.current = URL.createObjectURL(blob);
+  //   setVideoUrl(trimmedUrlRef.current);
+  // };
 
-  const handleResetTrimState = () => {
-    if (trimmedUrlRef.current) {
-      URL.revokeObjectURL(trimmedUrlRef.current);
-      trimmedUrlRef.current = null;
-    }
-    trimmedBlobRef.current = null;
-    if (originalVideoUrlRef.current) {
-      setVideoUrl(originalVideoUrlRef.current);
-    }
-  };
+  // const handleResetTrimState = () => {
+  //   if (trimmedUrlRef.current) {
+  //     URL.revokeObjectURL(trimmedUrlRef.current);
+  //     trimmedUrlRef.current = null;
+  //   }
+  //   trimmedBlobRef.current = null;
+  //   if (originalVideoUrlRef.current) {
+  //     setVideoUrl(originalVideoUrlRef.current);
+  //   }
+  // };
 
   const downloadVideo = async () => {
     const blob = trimmedBlobRef.current || videoBlobRef.current;
@@ -643,11 +645,11 @@ const VeoStudio: React.FC = () => {
 
   // If in product gallery mode, render the gallery component
   if (mode === "product-gallery") {
-    return <ProductGallery onBack={() => setMode('create-image')} />;
+    return <Gallery onBack={() => setMode("create-image")} />;
   }
 
   return (
-    <AnimatedLayout>
+    <div>
       <div
         className="relative min-h-screen w-full"
         onDragOver={handleDragOver}
@@ -665,7 +667,7 @@ const VeoStudio: React.FC = () => {
                   transition={{ duration: 0.5 }}
                   className="flex flex-col items-center justify-center gap-4 text-center px-4"
                 >
-                  <Logo className="w-16 h-16 animate-pulse" />
+                  
                   <div className="inline-flex items-center rounded-full bg-gray-700/80 px-4 py-2 text-sm font-medium text-gray-200">
                     {modelLabel}
                   </div>
@@ -909,6 +911,17 @@ const VeoStudio: React.FC = () => {
                         height={450}
                       />
                     </div>
+                    
+                    {/* Download button for generated images */}
+                    {generatedImage && (
+                      <button
+                        onClick={downloadImage}
+                        className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download Image
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -918,41 +931,99 @@ const VeoStudio: React.FC = () => {
             <div className="w-full max-w-3xl mx-auto">
               <div className="flex flex-col items-center gap-6">
                 {/* Video in center */}
-                <VideoPlayer
-                  src={videoUrl}
-                  onOutputChanged={handleTrimmedOutput}
-                  onDownload={downloadVideo}
-                  onResetTrim={handleResetTrimState}
-                />
+                <div className="w-full aspect-video overflow-hidden rounded-lg border relative">
+                  <video 
+                    src={videoUrl} 
+                    className="w-full h-full object-contain" 
+                    controls 
+                    autoPlay 
+                    muted={false} 
+                    loop 
+                    playsInline 
+                  />
+                </div>
+                
+                {/* Download button */}
+                <button
+                  onClick={downloadVideo}
+                  className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Video
+                </button>
               </div>
             </div>
           )}
-        </div>
+        </div>        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 w-[min(100%,56rem)] px-4">
+          <div className="relative text-slate-900/80 backdrop-blur-xl bg-gray-800/60 px-6 py-4 rounded-2xl shadow-lg border border-gray-700">
+            <div className="flex gap-1 mb-4 bg-gray-900/70 rounded-lg p-1.5 border border-gray-700">
+              <button onClick={() => setMode("create-image")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "create-image" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Create Image</button>
+              <button onClick={() => setMode("edit-image")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "edit-image" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Edit Image</button>
+              <button onClick={() => setMode("compose-image")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "compose-image" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Compose Image</button>
+              <button onClick={() => setMode("create-video")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "create-video" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Create Video</button>
+              <button onClick={() => setMode("product-gallery")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "product-gallery" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Gallery</button>
+            </div>
 
-        <Composer
-          mode={mode}
-          setMode={setMode}
-          hasGeneratedImage={!!(generatedImage || uploadedImageUrl)}
-          hasVideoUrl={!!videoUrl}
-          prompt={prompt}
-          setPrompt={setPrompt}
-          selectedModel={selectedModel}
-          setSelectedModel={setSelectedModel}
-          canStart={canStart}
-          isGenerating={isGenerating}
-          startGeneration={startGeneration}
-          imagePrompt={imagePrompt}
-          setImagePrompt={setImagePrompt}
-          editPrompt={editPrompt}
-          setEditPrompt={setEditPrompt}
-          composePrompt={composePrompt}
-          setComposePrompt={setComposePrompt}
-          geminiBusy={geminiBusy}
-          resetAll={resetAll}
-          downloadImage={downloadImage}
-        />
+            <textarea
+              value={
+                mode === "create-image"
+                  ? imagePrompt
+                  : mode === "edit-image"
+                  ? editPrompt
+                  : mode === "compose-image"
+                  ? composePrompt
+                  : prompt
+              }
+              onChange={(e) => {
+                if (mode === "create-image") {
+                  setImagePrompt(e.target.value);
+                } else if (mode === "edit-image") {
+                  setEditPrompt(e.target.value);
+                } else if (mode === "compose-image") {
+                  setComposePrompt(e.target.value);
+                } else {
+                  setPrompt(e.target.value);
+                }
+              }}
+              placeholder={
+                mode === "create-image"
+                  ? "Describe the image to create..."
+                  : mode === "edit-image"
+                  ? "Describe how to edit the image..."
+                  : mode === "compose-image"
+                  ? "Describe how to combine the images..."
+                  : "Generate a video with text and frames..."
+              }
+              className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal text-gray-200 placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
+              rows={3}
+            />
+
+            <div className="flex items-center justify-between mt-4">
+              <button
+                onClick={resetAll}
+                className="h-10 w-10 flex items-center justify-center bg-gray-700/80 rounded-full hover:bg-gray-600/90 cursor-pointer transition-colors"
+                title="Reset"
+              >
+                <p className="text-white">R</p>
+              </button>
+              <button
+                onClick={startGeneration}
+                disabled={!canStart || isGenerating || geminiBusy}
+                aria-busy={isGenerating || geminiBusy}
+                className={`h-10 w-10 flex items-center justify-center rounded-full text-white transition-all duration-300 ${
+                  !canStart || isGenerating || geminiBusy
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700 hover:scale-110 cursor-pointer"
+                }`}
+                title="Generate"
+              >
+                <p className="text-white">G</p>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </AnimatedLayout>
+    </div>
   );
 };
 

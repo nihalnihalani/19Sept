@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+*.lcov
 
 # next.js
 /.next/
@@ -19,6 +20,7 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -30,11 +32,17 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# local env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
-# tool-specific directories
+# tool-specific directories & configs
 .allstar/
+.cursor/
+.gemini/
+.claude/
+.vscode/
+.idea/
 
 # vercel
 .vercel
@@ -42,3 +50,80 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.Trash-*
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+lib-cov
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# Temporary folders
+tmp/
+temp/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Local configuration files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs
+*.log
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows specific
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux specific  
+*~
+
+# Cache directories
+.cache/
+.parcel-cache/

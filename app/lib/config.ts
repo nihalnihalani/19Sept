@@ -1,4 +1,13 @@
-import { Video } from '@/types/gallery';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { Video } from "./types";
+
+// Utility Functions
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// Constants
 
 /** Base URL for static files. */
 const staticFilesUrl =

@@ -17,13 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-type StudioMode =
-  | "create-image"
-  | "edit-image"
-  | "compose-image"
-  | "create-video"
-  | "product-gallery";
+import { StudioMode } from "@/types/studio";
 
 interface ComposerProps {
   mode: StudioMode;
@@ -252,6 +246,7 @@ const Composer: React.FC<ComposerProps> = ({
                     : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
                 }`}
               >
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
                 <Image className="w-4 h-4" aria-hidden="true" />
                 {getTabText("create-image")}
               </button>

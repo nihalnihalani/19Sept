@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { EditVideoPage } from './EditVideoPage';
 import { ErrorModal } from './ErrorModal';
-import { VideoCameraIcon } from './icons';
 import { SavingProgressPage } from './SavingProgressPage';
 import { VideoGrid } from './VideoGrid';
 import { VideoPlayer } from './VideoPlayer';
@@ -12,7 +11,6 @@ import { Video } from '@/types/gallery';
 import { Button } from '@/components/ui/Button';
 import { ArrowLeft } from 'lucide-react';
 import { AnimatedLayout } from '@/components/ui/Animation';
-import Header from '@/components/ui/Header';
 
 const VEO3_MODEL_NAME = 'veo-3.0-fast-generate-001';
 
@@ -63,7 +61,7 @@ async function generateVideoFromText(
     }
 
     // Poll for completion
-    let operation = { done: false };
+    let operation: { done: boolean; response?: { generatedVideos?: unknown[] } } = { done: false };
     while (!operation.done) {
       await new Promise((resolve) => setTimeout(resolve, 10000));
       console.log('...Generating...');
@@ -84,7 +82,7 @@ async function generateVideoFromText(
       }
 
       return await Promise.all(
-        videos.map(async (generatedVideo: any) => {
+        videos.map(async (generatedVideo: { video: { uri: string } }) => {
           const fileUri = generatedVideo.video.uri;
           if (!fileUri) {
             throw new Error('No video URI found');
@@ -204,7 +202,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ onBack }) => {
                   Product Gallery
                 </h1>
                 <p className="text-gray-400 mt-2 text-lg max-w-2xl mx-auto">
-                  Explore our collection of AI-generated videos. Click any video to watch it, or select "Edit" to use its prompt as a starting point for your own creation.
+                  Explore our collection of AI-generated videos. Click any video to watch it, or select &quot;Edit&quot; to use its prompt as a starting point for your own creation.
                 </p>
               </header>
               <main className="pb-8">

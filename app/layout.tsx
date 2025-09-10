@@ -17,13 +17,13 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Github",
-  description: "Github",
+  title: "Alchemy Studio - AI-Powered Creative Platform",
+  description: "Transform your ideas into stunning images and videos using Google's cutting-edge AI models. Experience the magic of AI creativity with Veo 3, Imagen 4, and Gemini 2.5 Flash.",
 };
 
 export default function RootLayout({
   children,
-}: React.PropsWithChildren<{}>) {
+}: React.PropsWithChildren) {
   return (
     <html lang="en" className="dark">
       <body className={`${manrope.variable} ${sourceCodePro.variable} text-gray-100`}>

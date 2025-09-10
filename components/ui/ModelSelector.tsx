@@ -1,12 +1,7 @@
 import { motion } from 'framer-motion';
 import React, { useState } from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
-
-type StudioMode =
-  | "create-image"
-  | "edit-image"
-  | "compose-image"
-  | "create-video";
+import { StudioMode } from "@/types/studio";
 
 interface ModelSelectorProps {
   selectedModel: string;

@@ -52,12 +52,25 @@ A modern, AI-powered creative studio built with Next.js that transforms your ide
    ```
 
 3. **Set up environment variables**
-   Create a `.env.local` file in the project root:
+   Copy the example environment file and edit it with your API key:
+   ```bash
+   cp .env.example .env
+   # Then edit .env with your actual API key
+   ```
+   
+   Or create a `.env` file manually in the project root:
    ```bash
    GEMINI_API_KEY=your_api_key_here
+   FRONTEND_PORT=3000
    ```
 
 4. **Start the development server**
+   Use the convenient run script:
+   ```bash
+   ./run.sh
+   ```
+   
+   Or use npm directly:
    ```bash
    npm run dev
    ```

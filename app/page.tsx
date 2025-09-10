@@ -961,7 +961,7 @@ const VeoStudio: React.FC = () => {
               <button onClick={() => setMode("edit-image")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "edit-image" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Edit Image</button>
               <button onClick={() => setMode("compose-image")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "compose-image" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Compose Image</button>
               <button onClick={() => setMode("create-video")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "create-video" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Create Video</button>
-              <button onClick={() => setMode("product-gallery")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "product-gallery" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Gallery</button>
+              <button onClick={() => setMode("product-gallery")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${(mode as StudioMode) === "product-gallery" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Gallery</button>
             </div>
 
             <textarea

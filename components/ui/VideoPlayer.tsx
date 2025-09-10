@@ -469,7 +469,7 @@ export default function VideoPlayer({
               value={played}
               onBeforeChange={() => setSeeking(true)}
               onChange={handleSeekChange}
-              onAfterChange={() => setSeeking(false)}
+              onChangeComplete={() => setSeeking(false)}
               styles={{
                 track: { backgroundColor: "#0ea5e9" },
                 handle: { backgroundColor: "#0ea5e9", borderColor: "#0ea5e9" },

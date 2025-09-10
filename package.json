@@ -1,6 +1,15 @@
 {
-  "name": "gemini-api-veo-3-quickstart",
-  "version": "0.1.0",
+  "name": "alchemy-studio",
+  "version": "1.0.0",
+  "description": "A modern AI-powered creative studio for generating images and videos using Google's Gemini API",
+  "keywords": ["ai", "image-generation", "video-generation", "gemini", "veo", "imagen", "nextjs", "react"],
+  "author": "Alchemy Studio Team",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/alchemy-studio.git"
+  },
+  "homepage": "https://github.com/yourusername/alchemy-studio#readme",
   "private": true,
   "scripts": {
     "dev": "next dev",

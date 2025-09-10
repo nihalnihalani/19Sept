@@ -1,128 +1,171 @@
-# Gemini API Veo 3 & Nano Banana Quickstart
+# Alchemy Studio
 
-A NextJs quickstart for creating and editing images and videos using Google's latest Gemini API models including [Veo 3](https://ai.google.dev/gemini-api/docs/video), [Imagen 4](https://ai.google.dev/gemini-api/docs/imagen), and [Gemini 2.5 Flash Image aka nano banana](https://ai.google.dev/gemini-api/docs/image-generations). 
+A modern, AI-powered creative studio built with Next.js that transforms your ideas into stunning images and videos using Google's cutting-edge AI models. Experience the magic of AI creativity with Veo 3, Imagen 4, and Gemini 2.5 Flash in a beautiful, intuitive interface.
 
-<table>
-  <tr>
-    <td align="center">
-      <img src="./public/compose.png" alt="Compose" width="300"/>
-      <br/>
-      <strong>Compose</strong>
-    </td>
-    <td align="center">
-      <img src="./public/edit.png" alt="Edit" width="300"/>
-      <br/>
-      <strong>Edit</strong>
-    </td>
-    <td align="center">
-      <img src="./public/video.png" alt="Video" width="300"/>
-      <br/>
-      <strong>Video</strong>
-    </td>
-  </tr>
-</table>
+![Alchemy Studio](https://img.shields.io/badge/Next.js-15.3.5-black?style=for-the-badge&logo=next.js)
+![React](https://img.shields.io/badge/React-19.0.0-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)
 
-> [!NOTE]
-> If you want a full studio, consider [Google's Flow](https://labs.google/fx/tools/flow) (a professional environment for Veo/Imagen). Use this repo as a lightweight studio to learn how to build your own UI that generates content with Google's AI models via the Gemini API.
+## ✨ Features
 
-(This is not an official Google product.)
+### 🎨 **AI Image Generation**
+- **Create Images**: Generate stunning visuals from text prompts using Imagen 4 or Gemini 2.5 Flash
+- **Edit Images**: Transform existing images with AI-powered editing using Gemini 2.5 Flash
+- **Compose Images**: Combine multiple images into creative compositions
 
-## Features
+### 🎬 **AI Video Generation**
+- **Create Videos**: Generate dynamic videos from text prompts or images using Veo 3
+- **Video Editing**: Built-in video trimming and editing tools
+- **Multiple Formats**: Support for various aspect ratios and video formats
 
-The quickstart provides a unified composer UI with different modes for content creation:
+### 🖼️ **Product Gallery**
+- **Video Library**: Browse and manage your generated videos
+- **Interactive Player**: Full-screen video playback with controls
+- **Edit & Remix**: Modify video descriptions and metadata
 
--   **Create Image**: Generate images from text prompts using **Imagen 4** or **Gemini 2.5 Flash Image**.
--   **Edit Image**: Edit an image based on a text prompt using **Gemini 2.5 Flash Image**.
--   **Compose Image**: Combine multiple images with a text prompt to create a new image using **Gemini 2.5 Flash Image**.
--   **Create Video**: Generate videos from text prompts or an initial image using **Veo 3**.
+### 🎭 **Modern UI/UX**
+- **Dark Theme**: Sophisticated dark interface with vibrant accents
+- **Smooth Animations**: Framer Motion powered transitions and interactions
+- **Responsive Design**: Works seamlessly across all devices
+- **Glassmorphism**: Modern glass-like UI elements with backdrop blur effects
 
-### Quick Actions & UI Features
-- Seamless navigation between modes after generating content
-- Download generated images & videos
-- Cut videos directly in the browser to specific time ranges
+## 🚀 Quick Start
 
+### Prerequisites
+- Node.js 18+ and npm
+- **GEMINI_API_KEY**: Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
-## Getting Started: Development and Local Testing
+> ⚠️ **Important**: Veo 3, Imagen 4, and Gemini 2.5 Flash require a paid Gemini API tier.
 
-Follow these steps to get the application running locally for development and testing.
+### Installation
 
-**1. Prerequisites:**
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/alchemy-studio.git
+   cd alchemy-studio
+   ```
 
--   Node.js and npm (or yarn/pnpm)
--   **`GEMINI_API_KEY`**: The application requires a [GEMINI API key](https://aistudio.google.com/app/apikey). Either create a `.env` file in the project root and add your API key: `GEMINI_API_KEY="YOUR_API_KEY"` or set the environment variable in your system.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-> [!WARNING]  
-> Google Veo 3, Imagen 4, and Gemini 2.5 Flash Image are part of the Gemini API Paid tier. You will need to be on the paid tier to use these models.
+3. **Set up environment variables**
+   Create a `.env.local` file in the project root:
+   ```bash
+   GEMINI_API_KEY=your_api_key_here
+   ```
 
-**2. Install Dependencies:**
+4. **Start the development server**
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm install
+5. **Open your browser**
+   Navigate to `http://localhost:3000` and start creating!
+
+## 🏗️ Project Structure
+
+```
+alchemy-studio/
+├── app/                          # Next.js App Router
+│   ├── api/                      # API routes
+│   │   ├── gemini/              # Gemini API endpoints
+│   │   ├── imagen/              # Imagen API endpoints
+│   │   └── veo/                 # Veo API endpoints
+│   ├── globals.css              # Global styles and animations
+│   ├── layout.tsx               # Root layout
+│   └── page.tsx                 # Main studio interface
+├── components/                   # React components
+│   ├── gallery/                 # Product gallery components
+│   └── ui/                      # UI components
+│       ├── Composer.tsx          # Main creative interface
+│       ├── VideoPlayer.tsx      # Video player with editing
+│       ├── ModelSelector.tsx    # AI model selection
+│       ├── Animation.tsx        # Framer Motion wrappers
+│       ├── Button.tsx           # Reusable button component
+│       ├── Header.tsx           # Application header
+│       └── Logo.tsx             # Alchemy Studio logo
+├── lib/                         # Utility functions
+└── public/                      # Static assets
 ```
 
-**3. Run Development Server:**
+## 🎯 How It Works
 
-```bash
-npm run dev
-```
+### Image Generation Flow
+1. **Select Mode**: Choose between Create, Edit, or Compose
+2. **Input Prompt**: Describe your vision in natural language
+3. **Upload Assets**: Add images for editing or composition
+4. **Generate**: AI creates your content using selected model
+5. **Download**: Save your creations in high quality
 
-Open your browser and navigate to `http://localhost:3000` to see the application.
+### Video Generation Flow
+1. **Create Video**: Enter your video prompt
+2. **Optional Image**: Upload a starting image for image-to-video
+3. **Configure**: Set aspect ratio and other parameters
+4. **Generate**: Veo 3 creates your video (this may take several minutes)
+5. **Edit**: Trim and refine your video in the built-in editor
+6. **Download**: Export your final video
 
-## Project Structure
+### Gallery Management
+- **Browse**: View all your generated videos
+- **Play**: Full-screen video playback
+- **Edit**: Modify video descriptions and metadata
+- **Organize**: Keep your creations organized
 
-The project is a standard Next.js application with the following key directories:
+## 🛠️ Technologies
 
--   `app/`: Contains the main application logic and pages
-    -   `page.tsx`: Main page with the unified composer UI.
-    -   `api/`: API routes for different operations
-        -   `imagen/generate/`: Image generation with Imagen 4
-        -   `gemini/generate/`: Image generation with Gemini 2.5 Flash Image
-        -   `gemini/edit/`: Image editing/composition with Gemini 2.5 Flash Image
-        -   `veo/generate/`: Video generation operations
-        -   `veo/operation/`: Check video generation status
-        -   `veo/download/`: Download generated videos
--   `components/`: Reusable React components
-    -   `ui/Composer.tsx`: The main unified composer for all interactions.
-    -   `ui/VideoPlayer.tsx`: Video player with trimming
-    -   `ui/ModelSelector.tsx`: Model selection component
-    -   `ui/dropzone.tsx`: Drag-and-drop component for file uploads.
--   `lib/`: Utility functions and schema definitions
--   `public/`: Static assets
+- **[Next.js 15.3.5](https://nextjs.org/)** - React framework with App Router
+- **[React 19.0.0](https://reactjs.org/)** - Modern React with concurrent features
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development
+- **[Tailwind CSS 4.0](https://tailwindcss.com/)** - Utility-first styling
+- **[Framer Motion](https://www.framer.com/motion/)** - Smooth animations
+- **[Google Gemini API](https://ai.google.dev/gemini-api/docs)** - AI models:
+  - **Veo 3** - Advanced video generation
+  - **Imagen 4** - High-quality image generation
+  - **Gemini 2.5 Flash** - Fast image generation and editing
 
-## Official Docs and Resources
+## 🎨 Design Philosophy
 
--   Gemini API docs: `https://ai.google.dev/gemini-api/docs`
--   Veo 3 Guide: `https://ai.google.dev/gemini-api/docs/video?example=dialogue`
--   Imagen 4 Guide: `https://ai.google.dev/gemini-api/docs/imagen`
+Alchemy Studio embraces a **dark, sophisticated aesthetic** with:
+- **Vibrant Gradients**: Dynamic background animations
+- **Glassmorphism**: Translucent UI elements with backdrop blur
+- **Smooth Animations**: Framer Motion powered transitions
+- **Intuitive UX**: Clean, minimal interface focused on creativity
 
-## How it Works
+## 📚 API Documentation
 
-The application uses the following API routes to interact with the Google models:
+### Image Generation
+- `POST /api/imagen/generate` - Generate images with Imagen 4
+- `POST /api/gemini/generate` - Generate images with Gemini 2.5 Flash
+- `POST /api/gemini/edit` - Edit images with Gemini 2.5 Flash
 
-### Image APIs
--   `app/api/imagen/generate/route.ts`: Handles image generation requests with Imagen 4
--   `app/api/gemini/generate/route.ts`: Handles image generation requests with Gemini 2.5 Flash Image
--   `app/api/gemini/edit/route.ts`: Handles image editing and composition with Gemini 2.5 Flash (supports multiple images)
+### Video Generation
+- `POST /api/veo/generate` - Start video generation with Veo 3
+- `POST /api/veo/operation` - Check generation status
+- `POST /api/veo/download` - Download completed videos
 
-### Video APIs
--   `app/api/veo/generate/route.ts`: Handles video generation requests with Veo 3
--   `app/api/veo/operation/route.ts`: Checks the status of video generation operations
--   `app/api/veo/download/route.ts`: Downloads generated videos
+## 🤝 Contributing
 
-## Technologies Used
+We welcome contributions! Please feel free to:
+- Open issues for bugs or feature requests
+- Submit pull requests for improvements
+- Share your creations made with Alchemy Studio
 
--   [Next.js](https://nextjs.org/) - React framework for building the user interface
--   [React](https://reactjs.org/) - JavaScript library for building user interfaces
--   [Tailwind CSS](https://tailwindcss.com/) - For styling
--   [Gemini API](https://ai.google.dev/gemini-api/docs) with:
-  - **Veo 3** - For video generation
-  - **Imagen 4** - For high-quality image generation
-  - **Gemini 2.5 Flash** - For fast image generation, editing, and composition
+## 📄 License
 
-## Questions and feature requests
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
--   **Want a feature?** Please open an issue describing the use case and proposed behavior.
+## 🙏 Acknowledgments
 
-## License
+- **Google AI** for providing the amazing Gemini API
+- **Next.js Team** for the incredible framework
+- **Framer Motion** for smooth animations
+- **Tailwind CSS** for beautiful styling
 
-This project is licensed under the Apache License 2.0.
+---
+
+**Made with ❤️ by the Alchemy Studio team**
+
+*Transform your ideas into reality with the power of AI*

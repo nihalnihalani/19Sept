@@ -16,7 +16,7 @@ import { ProductGallery } from "@/components/gallery/ProductGallery";
 import Header from '@/components/ui/Header';
 import { AnimatedLayout } from '@/components/ui/Animation';
 import { motion } from "framer-motion";
-import { Logo } from "@/components/ui/Logo";
+import Logo from "@/components/ui/Logo";
 
 type VeoOperationName = string | null;
 
@@ -828,7 +828,7 @@ const VeoStudio: React.FC = () => {
               </motion.div>
             ))}
 
-          {generatedImage &&
+          {(generatedImage || uploadedImageUrl) &&
             !videoUrl &&
             !(mode === "create-video" && isLoadingUI) && (
               <div className="w-full max-w-5xl mx-auto">
@@ -838,7 +838,7 @@ const VeoStudio: React.FC = () => {
                     <div className="w-full max-w-2xl relative">
                       <div className="aspect-video overflow-hidden rounded-lg border">
                         <Image
-                          src={generatedImage}
+                          src={generatedImage || uploadedImageUrl || ""}
                           alt="Generated"
                           className="w-full h-full object-contain"
                           width={800}
@@ -910,7 +910,7 @@ const VeoStudio: React.FC = () => {
                   <div className="flex flex-col items-center gap-6">
                     <div className="w-full max-w-4xl aspect-video overflow-hidden rounded-lg border relative">
                       <Image
-                        src={generatedImage}
+                        src={generatedImage || uploadedImageUrl || ""}
                         alt="Generated"
                         className="w-full h-full object-contain"
                         width={800}
@@ -940,7 +940,7 @@ const VeoStudio: React.FC = () => {
         <Composer
           mode={mode}
           setMode={setMode}
-          hasGeneratedImage={!!generatedImage}
+          hasGeneratedImage={!!(generatedImage || uploadedImageUrl)}
           hasVideoUrl={!!videoUrl}
           prompt={prompt}
           setPrompt={setPrompt}

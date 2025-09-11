@@ -8,15 +8,14 @@ import React, {
   useState,
 } from "react";
 import Image from "next/image";
-import { Upload, Download } from "lucide-react";
+import { Upload, Download, Loader2 } from "lucide-react";
 import Gallery from "@/components/gallery/Gallery";
-
-
-
-
 import { motion } from "framer-motion";
-
 import { StudioMode } from "@/lib/types";
+import { Navbar } from "@/components/ui/navbar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type VeoOperationName = string | null;
 
@@ -645,45 +644,53 @@ const VeoStudio: React.FC = () => {
 
   // If in product gallery mode, render the gallery component
   if (mode === "product-gallery") {
-    return <Gallery onBack={() => setMode("create-image")} />;
+    return <Gallery currentMode={mode} onModeChange={setMode} />;
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-background">
+      <Navbar currentMode={mode} onModeChange={setMode} />
+      
       <div
-        className="relative min-h-screen w-full"
+        className="relative min-h-screen w-full pt-16"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         {/* Main content area */}
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] pb-40 px-4">
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-140px)] pb-40 px-4">
           {!videoUrl &&
             (isLoadingUI ? (
-              <div className="w-full max-w-3xl">
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="flex flex-col items-center justify-center gap-4 text-center px-4"
-                >
-                  
-                  <div className="inline-flex items-center rounded-full bg-gray-700/80 px-4 py-2 text-sm font-medium text-gray-200">
-                    {modelLabel}
-                  </div>
-                  <p className="text-gray-400">
-                    {loadingMessages[loadingIndex % loadingMessages.length]}
-                  </p>
-                  <div className="mt-2 h-2 w-56 overflow-hidden rounded-full bg-gray-800 border border-gray-700">
-                    <motion.div 
-                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-yellow-400"
-                      initial={{ x: "-100%" }}
-                      animate={{ x: "0%" }}
-                      transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
-                    />
-                  </div>
-                </motion.div>
-              </div>
+              <Card className="w-full max-w-3xl mx-auto bg-card/50 backdrop-blur-sm">
+                <CardContent className="p-8">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex flex-col items-center justify-center gap-6 text-center"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <div className="inline-flex items-center rounded-full bg-primary/20 px-4 py-2 text-sm font-medium text-primary">
+                        {modelLabel}
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground text-lg">
+                      {loadingMessages[loadingIndex % loadingMessages.length]}
+                    </p>
+                    <div className="w-full max-w-xs">
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                        <motion.div 
+                          className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                          initial={{ x: "-100%" }}
+                          animate={{ x: "0%" }}
+                          transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                </CardContent>
+              </Card>
             ) : (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
@@ -691,31 +698,38 @@ const VeoStudio: React.FC = () => {
                 transition={{ duration: 0.7 }}
                 className="w-full max-w-3xl text-center"
               >
-                {/* Improved Empty State */}
-                <div className="bg-gray-800/50 p-8 rounded-2xl border border-gray-700">
-                  <h2 className="text-2xl font-bold text-gray-100 mb-2">Welcome to Alchemy Studio</h2>
-                  <p className="text-gray-400 mb-6">What would you like to create today?</p>
+                <Card className="bg-card/50 backdrop-blur-sm">
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      Welcome to Alchemy Studio
+                    </CardTitle>
+                    <CardDescription className="text-lg">
+                      What would you like to create today?
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
                   
-                  {((mode === "edit-image" || mode === "create-video") && !imageFile && !generatedImage) && (
-                    <div
-                      className={`rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors ${"bg-white/10 border-gray-300/70 hover:bg-white/30"}`}
-                      onClick={() => {
-                        const input = document.getElementById("single-image-input") as HTMLInputElement;
-                        input?.click();
-                      }}
-                    >
-                      <div className="flex flex-col items-center gap-3 text-gray-400">
-                        <Upload className="w-8 h-8" />
-                        <div className="font-medium text-lg text-gray-200">
-                          Drop an image here, or click to upload
-                        </div>
-                        <div className="text-sm opacity-80 mt-1">
-                          For Image Editing or Video Generation
+                    {((mode === "edit-image" || mode === "create-video") && !imageFile && !generatedImage) && (
+                      <div
+                        className={`rounded-lg border-2 border-dashed border-border p-8 cursor-pointer transition-colors hover:bg-accent/20 hover:border-primary/50`}
+                        onClick={() => {
+                          const input = document.getElementById("single-image-input") as HTMLInputElement;
+                          input?.click();
+                        }}
+                      >
+                        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                          <Upload className="w-8 h-8" />
+                          <div className="font-medium text-lg text-foreground">
+                            Drop an image here, or click to upload
+                          </div>
+                          <div className="text-sm opacity-80">
+                            For Image Editing or Video Generation
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {!(
                   mode === "edit-image" ||
@@ -914,13 +928,14 @@ const VeoStudio: React.FC = () => {
                     
                     {/* Download button for generated images */}
                     {generatedImage && (
-                      <button
+                      <Button
                         onClick={downloadImage}
-                        className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors"
+                        className="gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+                        size="lg"
                       >
                         <Download className="w-5 h-5" />
                         Download Image
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}
@@ -944,83 +959,75 @@ const VeoStudio: React.FC = () => {
                 </div>
                 
                 {/* Download button */}
-                <button
+                <Button
                   onClick={downloadVideo}
-                  className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors"
+                  className="gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+                  size="lg"
                 >
                   <Download className="w-5 h-5" />
                   Download Video
-                </button>
+                </Button>
               </div>
             </div>
           )}
         </div>        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 w-[min(100%,56rem)] px-4">
-          <div className="relative text-slate-900/80 backdrop-blur-xl bg-gray-800/60 px-6 py-4 rounded-2xl shadow-lg border border-gray-700">
-            <div className="flex gap-1 mb-4 bg-gray-900/70 rounded-lg p-1.5 border border-gray-700">
-              <button onClick={() => setMode("create-image")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "create-image" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Create Image</button>
-              <button onClick={() => setMode("edit-image")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "edit-image" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Edit Image</button>
-              <button onClick={() => setMode("compose-image")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "compose-image" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Compose Image</button>
-              <button onClick={() => setMode("create-video")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${mode === "create-video" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Create Video</button>
-              <button onClick={() => setMode("product-gallery")} className={`flex-1 px-3 py-2 rounded-md text-sm transition-all duration-200 ${(mode as StudioMode) === "product-gallery" ? "bg-purple-600/50 text-white shadow-inner" : "text-gray-300 hover:bg-gray-700/50 hover:text-white"}`}>Gallery</button>
-            </div>
-
-            <textarea
-              value={
-                mode === "create-image"
-                  ? imagePrompt
-                  : mode === "edit-image"
-                  ? editPrompt
-                  : mode === "compose-image"
-                  ? composePrompt
-                  : prompt
-              }
-              onChange={(e) => {
-                if (mode === "create-image") {
-                  setImagePrompt(e.target.value);
-                } else if (mode === "edit-image") {
-                  setEditPrompt(e.target.value);
-                } else if (mode === "compose-image") {
-                  setComposePrompt(e.target.value);
-                } else {
-                  setPrompt(e.target.value);
+          <Card className="backdrop-blur-xl bg-card/80 border-border/50 shadow-2xl">
+            <CardContent className="p-6">
+              <Textarea
+                value={
+                  mode === "create-image"
+                    ? imagePrompt
+                    : mode === "edit-image"
+                    ? editPrompt
+                    : mode === "compose-image"
+                    ? composePrompt
+                    : prompt
                 }
-              }}
-              placeholder={
-                mode === "create-image"
-                  ? "Describe the image to create..."
-                  : mode === "edit-image"
-                  ? "Describe how to edit the image..."
-                  : mode === "compose-image"
-                  ? "Describe how to combine the images..."
-                  : "Generate a video with text and frames..."
-              }
-              className="w-full bg-gray-900/70 focus:bg-gray-800/90 focus:outline-none resize-none text-base font-normal text-gray-200 placeholder-gray-400 rounded-lg px-4 py-3 border border-gray-700 focus:border-purple-400 transition-all duration-200"
-              rows={3}
-            />
+                onChange={(e) => {
+                  if (mode === "create-image") {
+                    setImagePrompt(e.target.value);
+                  } else if (mode === "edit-image") {
+                    setEditPrompt(e.target.value);
+                  } else if (mode === "compose-image") {
+                    setComposePrompt(e.target.value);
+                  } else {
+                    setPrompt(e.target.value);
+                  }
+                }}
+                placeholder={
+                  mode === "create-image"
+                    ? "Describe the image to create..."
+                    : mode === "edit-image"
+                    ? "Describe how to edit the image..."
+                    : mode === "compose-image"
+                    ? "Describe how to combine the images..."
+                    : "Generate a video with text and frames..."
+                }
+                className="min-h-[80px] text-base resize-none"
+                rows={3}
+              />
 
-            <div className="flex items-center justify-between mt-4">
-              <button
-                onClick={resetAll}
-                className="h-10 w-10 flex items-center justify-center bg-gray-700/80 rounded-full hover:bg-gray-600/90 cursor-pointer transition-colors"
-                title="Reset"
-              >
-                <p className="text-white">R</p>
-              </button>
-              <button
-                onClick={startGeneration}
-                disabled={!canStart || isGenerating || geminiBusy}
-                aria-busy={isGenerating || geminiBusy}
-                className={`h-10 w-10 flex items-center justify-center rounded-full text-white transition-all duration-300 ${
-                  !canStart || isGenerating || geminiBusy
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-purple-600 hover:bg-purple-700 hover:scale-110 cursor-pointer"
-                }`}
-                title="Generate"
-              >
-                <p className="text-white">G</p>
-              </button>
-            </div>
-          </div>
+              <div className="flex items-center justify-between mt-4">
+                <Button
+                  onClick={resetAll}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  Reset
+                </Button>
+                <Button
+                  onClick={startGeneration}
+                  disabled={!canStart || isGenerating || geminiBusy}
+                  className="gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+                  size="lg"
+                >
+                  {(isGenerating || geminiBusy) && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Generate
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

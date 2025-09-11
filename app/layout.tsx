@@ -25,8 +25,8 @@ export default function RootLayout({
   children,
 }: React.PropsWithChildren) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${manrope.variable} ${sourceCodePro.variable} text-gray-100`}>
+    <html lang="en">
+      <body className={`${manrope.variable} ${sourceCodePro.variable}`}>
         <main>{children}</main>
       </body>
     </html>

@@ -95,7 +95,7 @@ export function Navbar({ currentMode, onModeChange }: NavbarProps) {
                     variant={isActive ? "default" : "ghost"}
                     size="sm"
                     onClick={() => onModeChange(item.id)}
-                    className={`relative group ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+                    className={`relative group ${isActive ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent hover:text-accent-foreground'}`}
                   >
                     <Icon className="w-4 h-4 mr-2" />
                     {item.label}
@@ -122,7 +122,7 @@ export function Navbar({ currentMode, onModeChange }: NavbarProps) {
             </motion.div>
 
             {/* Help Button */}
-            <Button variant="ghost" size="sm" className="hidden md:flex">
+            <Button variant="ghost" size="sm" className="hidden md:flex text-foreground hover:bg-accent hover:text-accent-foreground">
               <HelpCircle className="w-4 h-4" />
             </Button>
 
@@ -130,7 +130,7 @@ export function Navbar({ currentMode, onModeChange }: NavbarProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden"
+              className="md:hidden text-foreground hover:bg-accent hover:text-accent-foreground"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -156,7 +156,7 @@ export function Navbar({ currentMode, onModeChange }: NavbarProps) {
                   <Button
                     key={item.id}
                     variant={isActive ? "default" : "ghost"}
-                    className="justify-start w-full"
+                    className={`justify-start w-full ${isActive ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent hover:text-accent-foreground'}`}
                     onClick={() => {
                       onModeChange(item.id);
                       setIsMobileMenuOpen(false);
@@ -172,7 +172,7 @@ export function Navbar({ currentMode, onModeChange }: NavbarProps) {
               })}
               
               <div className="border-t border-border/50 mt-2 pt-2">
-                <Button variant="ghost" className="justify-start w-full">
+                <Button variant="ghost" className="justify-start w-full text-foreground hover:bg-accent hover:text-accent-foreground">
                   <HelpCircle className="w-4 h-4 mr-3" />
                   Help & Support
                 </Button>

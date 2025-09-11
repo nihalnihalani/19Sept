@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Navbar } from "@/components/ui/navbar";
-import { StudioMode } from "@/lib/types";
 
 const VideoPlayerModal = ({ video, onClose, downloadVideo, shareVideo }: { 
   video: Video; 
@@ -95,10 +93,7 @@ const VideoPlayerModal = ({ video, onClose, downloadVideo, shareVideo }: {
 type SortOption = 'title' | 'newest' | 'oldest';
 type ViewMode = 'grid' | 'list';
 
-const Gallery: React.FC<{ 
-  currentMode?: StudioMode;
-  onModeChange?: (mode: StudioMode) => void;
-}> = ({ currentMode = "product-gallery", onModeChange }) => {
+const Gallery: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('title');
@@ -167,10 +162,7 @@ const Gallery: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar currentMode={currentMode} onModeChange={onModeChange || (() => {})} />
-      
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -418,7 +410,6 @@ const Gallery: React.FC<{
             shareVideo={shareVideo}
           />
         )}
-      </div>
     </div>
   );
 };

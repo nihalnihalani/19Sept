@@ -138,8 +138,8 @@ export function ModernStudioInterface({
             className="text-center space-y-2 mb-8"
           >
             <div className="flex items-center justify-center gap-2 mb-2">
-              <div className={`p-2 rounded-lg bg-gradient-to-r ${config.color}`}>
-                <Icon className="h-5 w-5 text-white" />
+              <div className="p-2 rounded-lg bg-muted">
+                <Icon className="h-5 w-5 text-foreground" />
               </div>
               <Badge variant="secondary" className="text-xs">
                 {config.title}
@@ -188,30 +188,51 @@ export function ModernStudioInterface({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="shadow-lg bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-6 space-y-4">
+            <Card className="border border-border shadow-none bg-card/80 backdrop-blur-sm">
+              <CardContent className="p-4 space-y-3">
                 <Textarea
                   value={prompt}
                   onChange={(e) => onPromptChange(e.target.value)}
                   placeholder={config.placeholder}
-                  className="min-h-[80px] resize-none text-base"
+                  className="min-h-[72px] resize-none text-base"
                   disabled={isGenerating}
                 />
                 
-                <div className="flex items-center justify-between">
-                  <Button
-                    onClick={onReset}
-                    variant="outline"
-                    size="sm"
-                    disabled={isGenerating}
-                  >
-                    Reset
-                  </Button>
-                  
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={onReset}
+                      variant="outline"
+                      size="sm"
+                      disabled={isGenerating}
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => {
+                          const files = Array.from((e.target as HTMLInputElement).files || []);
+                          if (files.length > 0 && onFileUpload) {
+                            onFileUpload(files);
+                          }
+                        };
+                        input.click();
+                      }}
+                      variant="outline"
+                      size="sm"
+                      disabled={isGenerating}
+                    >
+                      Upload Image
+                    </Button>
+                  </div>
+
                   <Button
                     onClick={onGenerate}
                     disabled={!prompt.trim() || isGenerating}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                    className="bg-foreground text-background hover:opacity-90"
                   >
                     {isGenerating ? (
                       <>
@@ -254,11 +275,11 @@ function GeneratingState({ progress, mode }: { progress: number; mode: string })
       exit={{ opacity: 0, scale: 0.95 }}
       className="text-center space-y-6"
     >
-      <Card className="shadow-lg">
+      <Card className="border border-border shadow-none">
         <CardContent className="p-8">
           <div className="space-y-6">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <Sparkles className="h-8 w-8 text-white animate-pulse" />
+            <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-foreground/80 animate-pulse" />
             </div>
             
             <div className="space-y-2">
@@ -299,7 +320,7 @@ function GeneratedContentDisplay({
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <Card className="shadow-lg overflow-hidden">
+      <Card className="border border-border shadow-none overflow-hidden">
         <CardContent className="p-0">
           <div className="min-h-[400px] max-h-[800px] bg-muted relative flex items-center justify-center">
             {content.type === 'image' ? (
@@ -329,7 +350,7 @@ function GeneratedContentDisplay({
           <X className="h-4 w-4 mr-2" />
           Clear
         </Button>
-        <Button onClick={handleDownload} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600">
+        <Button onClick={handleDownload} className="bg-foreground text-background hover:opacity-90">
           <Download className="h-4 w-4 mr-2" />
           Download
         </Button>
@@ -404,21 +425,16 @@ function EmptyState({
           </CardContent>
         </Card>
       ) : (
-        <Card className="shadow-lg">
-          <CardContent className="p-12 text-center">
-            <div className="space-y-4">
-              <div className="w-20 h-20 mx-auto bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <Sparkles className="h-10 w-10 text-white" />
-              </div>
+        (mode === 'create-image' || mode === 'create-video') ? null : (
+          <Card className="border border-border shadow-none">
+            <CardContent className="p-8 text-center">
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold">Ready to create something amazing?</h3>
-                <p className="text-muted-foreground w-full max-w-none px-4 leading-relaxed" style={{ wordBreak: 'normal', whiteSpace: 'normal', textOrientation: 'mixed', writingMode: 'horizontal-tb' }}>
-                  Describe your vision in the prompt below and let AI bring it to life
-                </p>
+                <h3 className="text-lg font-medium">{mode.replace('-', ' ')}</h3>
+                <p className="text-sm text-muted-foreground">Start by entering a prompt below.</p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )
       )}
     </motion.div>
   );

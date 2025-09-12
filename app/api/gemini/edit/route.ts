@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { writeFile } from "fs/promises";
+import path from "path";
+import { getSession } from "@/lib/neo4j";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is not set.");
@@ -117,11 +120,68 @@ export async function POST(req: Request) {
       );
     }
 
+    // Persist edited image to public/
+    const ext = responseMimeType.includes("jpeg") || responseMimeType.includes("jpg")
+      ? "jpg"
+      : responseMimeType.includes("webp")
+      ? "webp"
+      : "png";
+    const fileName = `edited_image_${Date.now()}.${ext}`;
+    const publicPath = path.join(process.cwd(), "public", fileName);
+    const buffer = Buffer.from(imageData, "base64");
+    await writeFile(publicPath, buffer);
+
+    // Insert into Neo4j
+    const session = getSession();
+    let media: any = null;
+    try {
+      await session.run(
+        "CREATE CONSTRAINT media_id IF NOT EXISTS FOR (m:Media) REQUIRE m.id IS UNIQUE"
+      );
+      await session.run(
+        "CREATE INDEX tag_name IF NOT EXISTS FOR (t:Tag) ON (t.name)"
+      );
+      const createdAt = new Date().toISOString();
+      const result = await session.run(
+        `MERGE (m:Media {id: $id})
+         ON CREATE SET m.createdAt = datetime($createdAt),
+                       m.url = $url,
+                       m.type = 'image',
+                       m.title = $title,
+                       m.description = $description,
+                       m.size = $size
+         ON MATCH SET  m.url = $url,
+                       m.type = 'image',
+                       m.title = $title,
+                       m.description = $description,
+                       m.size = $size
+         WITH m
+         UNWIND $tags AS tag
+         MERGE (t:Tag {name: tag})
+         MERGE (m)-[:TAGGED_WITH]->(t)
+         RETURN m { .* } AS media`,
+        {
+          id: `media-${Date.now()}`,
+          url: `/${fileName}`,
+          title: "Edited Image",
+          description: "Edited via Gemini 2.5 Flash",
+          createdAt,
+          size: buffer.length,
+          tags: ["edited", "gemini", "flash"],
+        }
+      );
+      media = result.records[0]?.get("media") ?? null;
+    } finally {
+      await session.close();
+    }
+
     return NextResponse.json({
       image: {
         imageBytes: imageData,
         mimeType: responseMimeType,
+        url: `/${fileName}`,
       },
+      media,
     });
   } catch (error) {
     console.error("Error editing image with Gemini:", error);

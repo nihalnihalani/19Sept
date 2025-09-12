@@ -55,8 +55,8 @@ export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
-      <div className="container flex h-16 items-center justify-between">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center justify-between px-4">
         
         {/* Logo */}
         <motion.div 
@@ -76,14 +76,14 @@ export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
         {/* Desktop Navigation */}
         <div className="hidden md:block">
           <Tabs value={currentMode} onValueChange={onModeChange}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-4 rounded-full border border-border bg-muted/50 p-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <TabsTrigger
                     key={item.id}
                     value={item.id}
-                    className="flex items-center gap-2 px-4 py-2"
+                    className="nav-tab flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:!text-black dark:data-[state=active]:!text-white"
                   >
                     <Icon className="h-4 w-4" />
                     <span className="hidden lg:inline">{item.label}</span>

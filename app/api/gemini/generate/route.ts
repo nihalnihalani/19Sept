@@ -14,9 +14,33 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const prompt = (body?.prompt as string) || "";
+    const uploadedBase64: string | undefined = body?.imageBase64;
+    const uploadedMime: string | undefined = body?.imageMimeType;
 
     if (!prompt) {
       return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
+    }
+
+    // Helper to save any provided base64 image directly (edit mode upload)
+    async function saveUploadedIfAny() {
+      if (!uploadedBase64) return null;
+      const mime = uploadedMime || "image/png";
+      const { fileName, media } = await saveAndInsert(uploadedBase64, mime, prompt || "Uploaded image");
+      return {
+        image: {
+          imageBytes: uploadedBase64,
+          mimeType: mime,
+          url: `/${fileName}`,
+        },
+        media,
+        message: "Image uploaded",
+      };
+    }
+
+    // If the client sent an image (edit mode), save it and return immediately
+    if (uploadedBase64) {
+      const uploadedSaved = await saveUploadedIfAny();
+      if (uploadedSaved) return NextResponse.json(uploadedSaved);
     }
 
     const response = await ai.models.generateContent({
@@ -119,8 +143,9 @@ export async function POST(req: Request) {
             fallback: "imagen",
           });
         }
-      } catch (e) {
-        console.error("Fallback to Imagen failed:", e);
+      } catch (e: any) {
+        const msg = e?.message || String(e);
+        console.warn("Imagen fallback did not produce an image:", msg);
       }
       // If still no image, return a helpful 200 with message
       return NextResponse.json({

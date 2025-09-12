@@ -165,6 +165,16 @@
   }
 }
 
+/* Navbar tab active contrast fix */
+@layer components {
+  .nav-tab[data-state="active"] {
+    color: rgb(0 0 0) !important; /* light theme: black */
+  }
+  .dark .nav-tab[data-state="active"] {
+    color: rgb(255 255 255) !important; /* dark theme: white */
+  }
+}
+
 @keyframes fadeIn {
   from { 
     opacity: 0; 

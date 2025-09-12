@@ -53,6 +53,7 @@ export default function ModernAlchemyStudio() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(mockGalleryItems);
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   // Map between URL path segment and StudioMode
   const pathToMode = (path: string): StudioMode => {
@@ -165,10 +166,40 @@ export default function ModernAlchemyStudio() {
     setVideoUrl(null);
   };
 
-  // Handle file uploads
-  const handleFileUpload = (files: File[]) => {
-    console.log('Files uploaded:', files);
-    // File upload logic will be handled by the existing API endpoints
+  // Handle file uploads (Edit / Compose): read file -> send to /api/gemini/generate
+  const handleFileUpload = async (files: File[]) => {
+    try {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      setUploadedFile(file);
+      // Read as data URL and strip the prefix to get base64
+      const base64: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          const comma = result.indexOf(',');
+          resolve(comma >= 0 ? result.substring(comma + 1) : result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      setState(prev => ({ ...prev, isGenerating: true }));
+
+      // Also preview the uploaded image immediately (non-blocking UX)
+      const previewUrl = `data:${file.type || 'image/png'};base64,${base64}`;
+      setState(prev => ({ ...prev, generatedContent: { type: 'image', url: previewUrl } }));
+
+      // Defer actual edit to when user clicks Generate, using /api/gemini/edit (multipart)
+      setState(prev => ({ ...prev, isGenerating: false }));
+      return;
+
+      // no-op
+    } catch (e) {
+      console.error('Edit upload failed:', e);
+      alert(`Edit upload failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      setState(prev => ({ ...prev, isGenerating: false }));
+    }
   };
 
   // Load media items from backend (Neo4j via /api/media)
@@ -286,44 +317,40 @@ export default function ModernAlchemyStudio() {
   // Edit image using Gemini API
   const editWithGemini = async () => {
     try {
+      if (!uploadedFile) {
+        throw new Error('Please upload an image to edit.');
+      }
+
+      setState(prev => ({ ...prev, isGenerating: true }));
+
       const form = new FormData();
-      form.append('prompt', state.prompt);
+      form.append('prompt', state.prompt || uploadedFile.name);
+      form.append('imageFile', uploadedFile);
 
-      // For now, we'll simulate the editing by generating a new image
-      // In a real implementation, you'd handle file upload here
-      const resp = await fetch('/api/gemini/generate', {
+      const resp = await fetch('/api/gemini/edit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: state.prompt }),
+        body: form,
       });
-
       if (!resp.ok) {
-        throw new Error(`API error: ${resp.status}`);
+        const text = await resp.text();
+        throw new Error(`Edit API error: ${resp.status} ${text}`);
       }
 
       const json = await resp.json();
-      
       if (json?.image?.imageBytes) {
         const dataUrl = `data:${json.image.mimeType};base64,${json.image.imageBytes}`;
         setState(prev => ({
           ...prev,
-          generatedContent: {
-            type: 'image',
-            url: dataUrl
-          },
-          isGenerating: false
+          generatedContent: { type: 'image', url: dataUrl },
+          isGenerating: false,
         }));
-      } else if (json?.message) {
-        // Gemini may return text guidance without an inline image (we fallback attempted on server)
-        alert(json.message || 'No image generated. Try a more specific prompt.');
-        setState(prev => ({ ...prev, isGenerating: false }));
+        if (json?.image?.url) {
+          await loadGallery();
+        }
       } else if (json?.error) {
         throw new Error(json.error);
-      }
-
-      // If server saved the edited image and returned a URL, refresh gallery
-      if (json?.image?.url) {
-        await loadGallery();
+      } else {
+        setState(prev => ({ ...prev, isGenerating: false }));
       }
     } catch (error) {
       console.error('Error editing image:', error);

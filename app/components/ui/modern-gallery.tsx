@@ -46,6 +46,7 @@ export function ModernGallery({ items, onDelete }: ModernGalleryProps) {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [density, setDensity] = useState<'cozy' | 'comfy'>('cozy');
 
   // Filter and sort items
   const filteredItems = useMemo(() => {
@@ -168,6 +169,17 @@ export function ModernGallery({ items, onDelete }: ModernGalleryProps) {
                       <SelectItem value="title">Title</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  {/* Density toggle */}
+                  <Select value={density} onValueChange={(value: 'cozy' | 'comfy') => setDensity(value)}>
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cozy">Cozy</SelectItem>
+                      <SelectItem value="comfy">Comfy</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
@@ -180,7 +192,7 @@ export function ModernGallery({ items, onDelete }: ModernGalleryProps) {
         ) : (
           <motion.div
             layout
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${density === 'cozy' ? 'gap-3 lg:gap-4' : 'gap-4 lg:gap-6'}`}
           >
             <AnimatePresence>
               {filteredItems.map((item, index) => (
@@ -192,6 +204,7 @@ export function ModernGallery({ items, onDelete }: ModernGalleryProps) {
                   onDownload={() => handleDownload(item)}
                   onShare={() => handleShare(item)}
                   onDelete={onDelete ? () => onDelete(item) : undefined}
+                  paddingClass={density === 'cozy' ? 'p-3 space-y-1.5' : 'p-4 space-y-2'}
                 />
               ))}
             </AnimatePresence>
@@ -284,7 +297,8 @@ function GalleryItemCard({
   onView,
   onDownload,
   onShare,
-  onDelete
+  onDelete,
+  paddingClass
 }: {
   item: GalleryItem;
   index: number;
@@ -292,6 +306,7 @@ function GalleryItemCard({
   onDownload: () => void;
   onShare: () => void;
   onDelete?: () => void;
+  paddingClass?: string;
 }) {
   return (
     <motion.div
@@ -302,14 +317,14 @@ function GalleryItemCard({
       transition={{ delay: index * 0.05, duration: 0.3 }}
       className="group"
     >
-      <Card className="shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+      <Card className="border border-border bg-card shadow-none overflow-hidden hover:shadow-sm transition-shadow">
         <CardContent className="p-0">
           <div className="relative aspect-video bg-muted cursor-pointer group" onClick={onView}>
             {item.type === 'video' ? (
               <>
                 <video
                   src={item.url}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.01]"
                   muted
                   loop
                   playsInline
@@ -343,7 +358,7 @@ function GalleryItemCard({
                 src={item.url}
                 alt={item.title}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-200 group-hover:scale-[1.01]"
               />
             )}
             
@@ -410,9 +425,9 @@ function GalleryItemCard({
             </div>
           </div>
           
-          <div className="p-4 space-y-2">
-            <h3 className="font-medium truncate">{item.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">
+          <div className={paddingClass || "p-3 space-y-1.5"}>
+            <h3 className="font-medium truncate leading-tight">{item.title}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
               {item.description}
             </p>
             <div className="flex items-center justify-between text-xs text-muted-foreground">

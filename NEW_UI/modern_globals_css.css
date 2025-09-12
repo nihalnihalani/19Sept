@@ -74,26 +74,26 @@
 }
 
 .dark {
-  /* Dark theme - elegant and minimal (lighter variant) */
-  --background: oklch(20% 0 0);
+  /* Dark theme - elegant and minimal */
+  --background: oklch(3.4% 0 0);
   --foreground: oklch(97.3% 0 0);
-  --card: oklch(25% 0 0);
+  --card: oklch(7% 0 0);
   --card-foreground: oklch(97.3% 0 0);
-  --popover: oklch(25% 0 0);
+  --popover: oklch(7% 0 0);
   --popover-foreground: oklch(97.3% 0 0);
   --primary: oklch(97.3% 0 0);
-  --primary-foreground: oklch(15% 0 0);
-  --secondary: oklch(30% 0 0);
+  --primary-foreground: oklch(9% 0 0);
+  --secondary: oklch(15% 0 0);
   --secondary-foreground: oklch(97.3% 0 0);
-  --muted: oklch(40% 0 0);
-  --muted-foreground: oklch(70% 0 0);
-  --accent: oklch(35% 0 0);
+  --muted: oklch(15% 0 0);
+  --muted-foreground: oklch(64% 0 0);
+  --accent: oklch(24% 0 0);
   --accent-foreground: oklch(97.3% 0 0);
   --destructive: oklch(75% 0.2 25);
   --destructive-foreground: oklch(97.3% 0 0);
-  --border: oklch(45% 0 0);
-  --input: oklch(45% 0 0);
-  --ring: oklch(70% 0 0);
+  --border: oklch(24% 0 0);
+  --input: oklch(24% 0 0);
+  --ring: oklch(64% 0 0);
   --chart-1: oklch(62% 0.2 272);
   --chart-2: oklch(70% 0.17 33);
   --chart-3: oklch(48% 0.16 274);
@@ -147,21 +147,6 @@
   
   .transition-smooth {
     transition: all 200ms ease-out;
-  }
-  
-  /* Line clamp utilities */
-  .line-clamp-2 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-  
-  .line-clamp-3 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
   }
 }
 

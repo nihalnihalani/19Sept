@@ -10,7 +10,8 @@ import {
   Search, 
   Grid3X3,
   MoreVertical,
-  Calendar
+  Calendar,
+  Trash2
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -34,12 +35,13 @@ interface GalleryItem {
 
 interface ModernGalleryProps {
   items: GalleryItem[];
+  onDelete?: (item: GalleryItem) => void;
 }
 
 type SortOption = 'newest' | 'oldest' | 'title';
 type FilterOption = 'all' | 'image' | 'video';
 
-export function ModernGallery({ items }: ModernGalleryProps) {
+export function ModernGallery({ items, onDelete }: ModernGalleryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
@@ -189,6 +191,7 @@ export function ModernGallery({ items }: ModernGalleryProps) {
                   onView={() => setSelectedItem(item)}
                   onDownload={() => handleDownload(item)}
                   onShare={() => handleShare(item)}
+                  onDelete={onDelete ? () => onDelete(item) : undefined}
                 />
               ))}
             </AnimatePresence>
@@ -218,6 +221,17 @@ export function ModernGallery({ items }: ModernGalleryProps) {
                       >
                         <Share className="h-4 w-4" />
                       </Button>
+                      {onDelete && (
+                        <Button
+                          onClick={() => onDelete(selectedItem)}
+                          variant="outline"
+                          size="sm"
+                          title="Delete"
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </DialogTitle>
                 </DialogHeader>
@@ -269,13 +283,15 @@ function GalleryItemCard({
   index,
   onView,
   onDownload,
-  onShare
+  onShare,
+  onDelete
 }: {
   item: GalleryItem;
   index: number;
   onView: () => void;
   onDownload: () => void;
   onShare: () => void;
+  onDelete?: () => void;
 }) {
   return (
     <motion.div
@@ -342,19 +358,53 @@ function GalleryItemCard({
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
                     <MoreVertical className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={onDownload}>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onDownload();
+                    }}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onShare}>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onShare();
+                    }}
+                  >
                     <Share className="h-4 w-4 mr-2" />
                     Share
                   </DropdownMenuItem>
+                  {onDelete && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDelete();
+                      }}
+                      className="text-red-600"
+                    >
+                      {/* reuse Share icon space or add a small X icon if available */}
+                      <span className="h-4 w-4 mr-2">✕</span>
+                      Delete
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

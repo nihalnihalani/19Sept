@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
         pathname: '/**',
+      },
+      // Allow local images saved under public/ when stored with an absolute URL
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        pathname: '/**',
       }
     ],
   },

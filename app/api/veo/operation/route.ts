@@ -25,7 +25,25 @@ export async function POST(req: Request) {
       operation: { name } as unknown as never,
     });
 
-    return NextResponse.json(fresh);
+    // Collect any URIs in the payload to simplify client handling
+    function collectUris(obj: any, acc: string[] = []): string[] {
+      if (!obj) return acc;
+      if (typeof obj === 'object') {
+        for (const [k, v] of Object.entries(obj)) {
+          if (k.toLowerCase() === 'uri' && typeof v === 'string') {
+            acc.push(v);
+          } else if (typeof v === 'object') {
+            collectUris(v as any, acc);
+          }
+        }
+      } else if (Array.isArray(obj)) {
+        for (const v of obj) collectUris(v as any, acc);
+      }
+      return acc;
+    }
+
+    const uris = collectUris(fresh);
+    return NextResponse.json({ ...fresh, uris });
   } catch (error) {
     console.error("Error polling operation:", error);
     return NextResponse.json(

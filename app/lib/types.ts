@@ -27,3 +27,21 @@ export type Model = {
   name: string;
   label: string;
 };
+
+/**
+ * Media metadata stored in Neo4j
+ */
+export interface MediaMetadata {
+  id: string; // unique id for the media
+  url: string; // storage URL
+  type: "image" | "video" | "audio" | "other";
+  title?: string;
+  description?: string;
+  createdAt?: string; // ISO string
+  width?: number;
+  height?: number;
+  duration?: number; // seconds
+  size?: number; // bytes
+  checksum?: string; // optional integrity hash
+  tags?: string[];
+}

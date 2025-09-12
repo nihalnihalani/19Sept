@@ -18,12 +18,28 @@
 /.next/
 /out/
 
+# generated media (saved by APIs)
+/public/generated_*
+/public/*.mp4
+/public/*.webm
+/public/*.ogv
+
+# local scratch assets
+/generated_image.png
+
+# temp/output
+/public/tmp/
+/tmp/
+/**/*.tmp
+
+# editor/OS caches
+.DS_Store
+
 # production
 /build
 /dist
 
 # misc
-.DS_Store
 *.pem
 
 # debug
@@ -75,6 +91,13 @@ Thumbs.db
 
 # Coverage directory used by tools like istanbul
 lib-cov
+
+# Additional caches
+.eslintcache
+.stylelintcache
+.turbo/
+.vite/
+.swc/
 
 # Grunt intermediate storage
 .grunt

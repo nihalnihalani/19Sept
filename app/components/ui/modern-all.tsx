@@ -53,6 +53,7 @@ export function ModernAll() {
 
   // Live progress via SSE
   const sessionRef = useRef<string>(`sess_${Math.random().toString(36).slice(2)}`);
+  const sseReadyRef = useRef<boolean>(false);
   useEffect(() => {
     try {
       const es = new EventSource(`/api/progress?session=${encodeURIComponent(sessionRef.current)}`);
@@ -60,7 +61,13 @@ export function ModernAll() {
         if (!ev?.data) return;
         try {
           const parsed = JSON.parse(ev.data);
-          if (parsed?.text) setLog((l) => [...l, parsed.text]);
+          if (parsed?.text) {
+            if (String(parsed.text).startsWith('SSE connected')) {
+              sseReadyRef.current = true;
+            } else {
+              setLog((l) => [...l, parsed.text]);
+            }
+          }
         } catch {
           setLog((l) => [...l, String(ev.data)]);
         }
@@ -75,7 +82,10 @@ export function ModernAll() {
   }, []);
 
   const appendLog = useCallback(async (line: string) => {
-    setLog((l) => [...l, line]);
+    if (!sseReadyRef.current) {
+      // Before SSE connection established, append locally for immediate feedback
+      setLog((l) => [...l, line]);
+    }
     try {
       await fetch('/api/progress/push', {
         method: 'POST',
@@ -95,15 +105,14 @@ export function ModernAll() {
 
   const runFlow = async () => {
     if (!file && !imageUrl) return;
-    if (demographics.length === 0) {
-      // try parsing from current chat input as a convenience
-      const parsed = parseCampaignPlan(chatInput);
-      setDemographics(parsed);
-      if (parsed.length === 0) {
-        appendLog("Please define at least one demographic in the chat panel.");
-        return;
-      }
+    // Determine demographics to use for this run
+    let currentDemographics = demographics && demographics.length > 0 ? demographics : parseCampaignPlan(chatInput);
+    if ((!currentDemographics) || currentDemographics.length === 0) {
+      await appendLog("Please define at least one demographic in the chat panel.");
+      return;
     }
+    // Ensure UI reflects parsed values
+    if (demographics.length === 0) setDemographics(currentDemographics);
     setRunning(true);
     setStep("analyze");
     setLog([]);
@@ -125,12 +134,12 @@ export function ModernAll() {
 
       // 2) Cultural targeting via Cultural API per demographic
       setStep("cultural");
-      appendLog(`Fetching cultural signals for ${demographics.length} demographics...`);
+      appendLog(`Fetching cultural signals for ${currentDemographics.length} demographics...`);
 
       const baseSummary = summarizeInsights(analyzed.insights);
       const perAudiencePrompt: Record<string, string> = {};
 
-      for (const d of demographics) {
+      for (const d of currentDemographics) {
         const city = d.city || d.title;
         const country = d.country || d.title;
         const culturalResp = await fetch("/api/cultural/intelligence", {
@@ -147,7 +156,7 @@ export function ModernAll() {
       // 3) Generate images sequentially
       setStep("gen_images");
       appendLog("Generating images one-by-one...");
-      for (const d of demographics) {
+      for (const d of currentDemographics) {
         const prompt = perAudiencePrompt[d.key];
         appendLog(`Generating image for ${d.title}...`);
         const url = await generateOrEditImage(prompt, file);
@@ -159,7 +168,7 @@ export function ModernAll() {
       setStep("gen_videos");
       appendLog("Generating videos one-by-one...");
       let allVideos = true;
-      for (const d of demographics) {
+      for (const d of currentDemographics) {
         const prompt = perAudiencePrompt[d.key];
         appendLog(`Generating video for ${d.title}...`);
         const vurl = await generateVideoFromPrompt(prompt, { onLog: (m) => appendLog(m) });
@@ -173,7 +182,7 @@ export function ModernAll() {
       }
 
       setStep("done");
-      appendLog(allVideos ? `Flow complete. ${demographics.length} images and ${demographics.length} videos produced.` : `Flow complete. Images produced. One or more videos pending/failed – retry per demographic.`);
+      appendLog(allVideos ? `Flow complete. ${currentDemographics.length} images and ${currentDemographics.length} videos produced.` : `Flow complete. Images produced. One or more videos pending/failed – retry per demographic.`);
     } catch (e: any) {
       console.error(e);
       appendLog(`Error: ${e?.message || e}`);

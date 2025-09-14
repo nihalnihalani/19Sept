@@ -16,8 +16,7 @@ import {
   Sun,
   Moon,
   Globe,
-  Wand2,
-  Map
+  Wand2
 } from 'lucide-react';
 import { StudioMode } from '@/lib/types';
 
@@ -36,11 +35,6 @@ const navigationItems = [
     id: 'all' as StudioMode,
     label: 'All',
     icon: Wand2,
-  },
-  {
-    id: 'maps' as StudioMode,
-    label: 'Maps',
-    icon: Map,
   },
   {
     id: 'create-image' as StudioMode,
@@ -115,11 +109,6 @@ export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
 
         {/* Right side actions */}
         <div className="flex items-center gap-2">
-          {/* Maps link */}
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/maps">Maps</Link>
-          </Button>
-          
           {/* Theme toggle */}
           <Button
             variant="ghost"

@@ -68,8 +68,7 @@ export type StudioMode =
   | "edit-image"
   | "compose-image"
   | "create-video"
-  | "product-gallery"
-  | "maps";
+  | "product-gallery";
 
 /**
  * Model configuration interface

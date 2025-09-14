@@ -17,6 +17,7 @@ import {
   Globe
 } from 'lucide-react';
 import { StudioMode } from '@/lib/types';
+import { useStudio } from '@/lib/useStudio';
 
 interface ModernNavbarProps {
   currentMode: StudioMode;
@@ -53,6 +54,9 @@ const navigationItems = [
 
 export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const studio = useStudio();
+  const hasCulture = !!studio.state.culturalContext;
+  const hasLastImage = !!studio.state.lastImage?.url;
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -117,6 +121,47 @@ export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
             )}
           </Button>
 
+          {/* Quick transfer actions (minimal UI) */}
+          {hasCulture && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                try { studio.applyCulturalToPrompt(currentMode === 'edit-image' ? 'edit' : currentMode === 'create-video' ? 'video' : 'create'); } catch {}
+              }}
+              className="hidden md:flex"
+              title="Apply Cultural Context to Prompt"
+            >
+              Apply Cultural
+            </Button>
+          )}
+          {hasLastImage && currentMode !== 'edit-image' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onModeChange('edit-image');
+              }}
+              className="hidden md:flex"
+              title="Open last image in Edit"
+            >
+              Open in Edit
+            </Button>
+          )}
+          {hasLastImage && currentMode !== 'create-video' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onModeChange('create-video');
+              }}
+              className="hidden md:flex"
+              title="Use last image in Video"
+            >
+              Use in Video
+            </Button>
+          )}
+
           {/* Mobile menu */}
           <Sheet>
             <SheetTrigger asChild>
@@ -172,6 +217,32 @@ export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
                       </>
                     )}
                   </Button>
+                  {/* Mobile quick actions */}
+                  {hasCulture && (
+                    <Button
+                      variant="ghost"
+                      className="justify-start w-full"
+                      onClick={() => {
+                        try { studio.applyCulturalToPrompt(currentMode === 'edit-image' ? 'edit' : currentMode === 'create-video' ? 'video' : 'create'); } catch {}
+                      }}
+                    >
+                      Apply Cultural
+                    </Button>
+                  )}
+                  {hasLastImage && (
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        variant="ghost"
+                        className="flex-1"
+                        onClick={() => onModeChange('edit-image')}
+                      >Open in Edit</Button>
+                      <Button
+                        variant="ghost"
+                        className="flex-1"
+                        onClick={() => onModeChange('create-video')}
+                      >Use in Video</Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </SheetContent>

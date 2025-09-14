@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Target, Globe, Database } from "lucide-react";
+import { Loader2, MapPin, Target, Globe, Database, ArrowRight } from "lucide-react";
+import { useStudio } from "@/lib/useStudio";
 
 export function ModernCultural() {
+  const studio = useStudio();
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
   const [businessType, setBusinessType] = useState("");
@@ -39,10 +41,23 @@ export function ModernCultural() {
       }
       const json = await resp.json();
       setResult(json);
+      try { if (json?.analysis) studio.setCulturalContext(json.analysis); } catch {}
     } catch (e: any) {
       setError(e?.message || "Failed to analyze culture");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const applyToPrompt = () => {
+    try { studio.applyCulturalToPrompt(); } catch {}
+  };
+
+  const continueTo = (path: string, modeHint: "create" | "edit" | "video") => {
+    try { studio.applyCulturalToPrompt(modeHint); } catch {}
+    if (typeof window !== "undefined") {
+      window.history.pushState({}, "", path);
+      window.dispatchEvent(new PopStateEvent("popstate"));
     }
   };
 
@@ -125,6 +140,22 @@ export function ModernCultural() {
       {/* Results */}
       {result && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="lg:col-span-2">
+            <CardContent className="p-4 flex flex-wrap gap-2 items-center">
+              <Button onClick={applyToPrompt} size="sm" variant="default">
+                Apply to Prompt
+              </Button>
+              <Button onClick={() => continueTo('/create', 'create')} size="sm" variant="outline">
+                Continue in Create <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <Button onClick={() => continueTo('/edit', 'edit')} size="sm" variant="outline">
+                Continue in Edit <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <Button onClick={() => continueTo('/video', 'video')} size="sm" variant="outline">
+                Continue in Video <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="p-4 space-y-2">
               <h3 className="font-semibold">Profile</h3>

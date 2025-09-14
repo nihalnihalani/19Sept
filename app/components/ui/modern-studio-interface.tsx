@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { useStudio } from '@/lib/useStudio';
 
 interface ModernStudioInterfaceProps {
   mode: 'create-image' | 'edit-image' | 'compose-image' | 'create-video' | 'product-gallery';
@@ -85,6 +86,9 @@ export function ModernStudioInterface({
   const [progress, setProgress] = useState(0);
   const config = modeConfig[mode];
   const Icon = config.icon;
+  const studio = useStudio();
+  const hasLastImage = !!studio.state.lastImage?.url;
+  const hasCulture = !!studio.state.culturalContext;
 
   // Simulate progress during generation
   React.useEffect(() => {
@@ -147,6 +151,15 @@ export function ModernStudioInterface({
             </div>
             <h1 className="text-2xl font-semibold">{config.title}</h1>
             <p className="text-muted-foreground">{config.description}</p>
+            {/* Small contextual indicators */}
+            <div className="flex items-center justify-center gap-2 mt-2">
+              {hasCulture && (
+                <Badge variant="secondary" className="text-xs">Cultural context available</Badge>
+              )}
+              {mode === 'edit-image' && hasLastImage && (
+                <Badge variant="secondary" className="text-xs">Last image ready</Badge>
+              )}
+            </div>
           </motion.div>
 
           {/* Main Content Area - grows to fill space */}
@@ -173,6 +186,8 @@ export function ModernStudioInterface({
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
+                  hasLastImage={hasLastImage}
+                  lastImageUrl={studio.state.lastImage?.url}
                 />
               )}
             </AnimatePresence>
@@ -227,6 +242,24 @@ export function ModernStudioInterface({
                     >
                       Upload Image
                     </Button>
+                    {mode === 'edit-image' && hasLastImage && (
+                      <Button
+                        onClick={async () => {
+                          if (!onFileUpload || !studio.state.lastImage?.url) return;
+                          try {
+                            const file = await fetchUrlToFile(studio.state.lastImage.url, 'last-image.png');
+                            onFileUpload([file]);
+                          } catch {
+                            // ignore
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        disabled={isGenerating}
+                      >
+                        Use Last Image
+                      </Button>
+                    )}
                   </div>
 
                   <Button
@@ -360,13 +393,21 @@ function GeneratedContentDisplay({
 }
 
 // Empty State Component
+async function fetchUrlToFile(url: string, filename: string): Promise<File> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type || 'image/png' });
+}
+
 function EmptyState({
   mode,
   onFileUpload,
   dragActive,
   onDrop,
   onDragOver,
-  onDragLeave
+  onDragLeave,
+  hasLastImage,
+  lastImageUrl
 }: {
   mode: string;
   onFileUpload?: (files: File[]) => void;
@@ -374,6 +415,8 @@ function EmptyState({
   onDrop: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: (e: React.DragEvent) => void;
+  hasLastImage?: boolean;
+  lastImageUrl?: string;
 }) {
   const needsFileUpload = mode === 'edit-image' || mode === 'compose-image';
 
@@ -425,7 +468,17 @@ function EmptyState({
           </CardContent>
         </Card>
       ) : (
-        (mode === 'create-image' || mode === 'create-video') ? null : (
+        (mode === 'create-image' || mode === 'create-video') ? (
+          <>
+            {mode === 'create-video' && hasLastImage && lastImageUrl && (
+              <Card className="border border-border shadow-none">
+                <CardContent className="p-4 text-center">
+                  <p className="text-sm text-muted-foreground">A recently generated image is available and can inspire your video prompt.</p>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        ) : (
           <Card className="border border-border shadow-none">
             <CardContent className="p-8 text-center">
               <div className="space-y-2">

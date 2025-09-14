@@ -20,9 +20,14 @@
 
 # generated media (saved by APIs)
 /public/generated_*
+/public/edited_image_*
 /public/*.mp4
 /public/*.webm
 /public/*.ogv
+/public/*.png
+/public/*.jpg
+/public/*.jpeg
+/public/*.webp
 
 # local scratch assets
 /generated_image.png

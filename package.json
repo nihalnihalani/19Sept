@@ -24,7 +24,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "clean:media": "rm -f public/generated_* public/edited_image_* public/*.mp4 public/*.webm public/*.ogv public/*.png public/*.jpg public/*.jpeg public/*.webp || true",
+    "clean:cache": "rm -rf .next && rm -rf node_modules/.cache || true"
   },
   "dependencies": {
     "@google/genai": "^1.8.0",

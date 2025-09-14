@@ -11,6 +11,54 @@ export interface Video {
 }
 
 /**
+ * Cultural intelligence context shared across modes
+ */
+export type CulturalContext = {
+  profile?: any;
+  aesthetics?: any;
+  communication?: any;
+  themes?: any;
+  demographics?: any;
+  brands?: any;
+};
+
+/**
+ * Workflow steps to keep a lightweight creation history
+ */
+export type WorkflowStep = {
+  mode: StudioMode;
+  action:
+    | "generate"
+    | "edit"
+    | "compose"
+    | "video-start"
+    | "video-complete"
+    | "apply-culture";
+  payload?: Record<string, any>;
+  at: string; // ISO timestamp
+};
+
+/**
+ * Shared studio state persisted in localStorage
+ */
+export type StudioSharedState = {
+  prompt?: string;
+  lastImage?: {
+    url: string;
+    mimeType?: string;
+    id?: string;
+    imageBytes?: string;
+  };
+  lastVideo?: {
+    url: string;
+    mimeType?: string;
+    id?: string;
+  };
+  culturalContext?: CulturalContext;
+  workflow: WorkflowStep[];
+};
+
+/**
  * Studio modes for different AI generation types
  */
 export type StudioMode =

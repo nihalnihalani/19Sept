@@ -49,6 +49,7 @@ export function ModernAll() {
     images: Record<string, { url: string } | null>;
     videos: Record<string, { url: string } | null>;
   }>({ images: { jp_genz_tech: null, bedouin_genz_whiteblue: null }, videos: { jp_genz_tech: null, bedouin_genz_whiteblue: null } });
+  const [audiencePrompts, setAudiencePrompts] = useState<Record<string, string>>({});
 
   const appendLog = useCallback((line: string) => setLog((l) => [...l, line]), []);
 
@@ -95,6 +96,7 @@ export function ModernAll() {
       const baseSummary = summarizeInsights(analyzed.insights);
       const promptA = buildAudiencePrompt(baseSummary, cultural.analysis, audiences[0]);
       const promptB = buildAudiencePrompt(baseSummary, cultural.analysis, audiences[1]);
+      setAudiencePrompts({ [audiences[0].key]: promptA, [audiences[1].key]: promptB });
 
       // 3) Generate two images (edit if file exists; else generate)
       setStep("gen_images");
@@ -198,6 +200,7 @@ export function ModernAll() {
         {audiences.map((a) => {
           const img = results.images[a.key];
           const vid = results.videos[a.key];
+          const prompt = audiencePrompts[a.key] || '';
           return (
             <Card key={a.key} className="shadow-sm">
               <CardContent className="p-4 space-y-3">
@@ -213,11 +216,37 @@ export function ModernAll() {
                 ) : (
                   <div className="text-xs text-muted-foreground">Image pending...</div>
                 )}
-                {vid?.url ? (
-                  <video src={vid.url} className="w-full rounded border" controls />
-                ) : (
-                  <div className="text-xs text-muted-foreground">Video pending...</div>
-                )}
+                {/* Video Row: show prompt with Generate Video button and the resulting video */}
+                <div className="mt-2 space-y-2">
+                  <div>
+                    <p className="text-xs font-medium">Video Prompt (inspired by Qloo + image understanding)</p>
+                    <pre className="text-[11px] whitespace-pre-wrap text-muted-foreground max-h-32 overflow-auto border rounded p-2 bg-muted/30">
+                      {prompt || 'Prompt will appear after analysis'}
+                    </pre>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        if (!prompt) return;
+                        setStep('gen_videos');
+                        appendLog(`Generating video for ${a.title}...`);
+                        const videoUrl = await generateVideoFromPrompt(prompt);
+                        setResults((r) => ({ ...r, videos: { ...r.videos, [a.key]: videoUrl ? { url: videoUrl } : null } }));
+                        if (videoUrl) try { studio.setVideo({ url: videoUrl }); } catch {}
+                      }}
+                      disabled={running || !prompt}
+                    >
+                      Generate Video
+                    </Button>
+                  </div>
+                  {vid?.url ? (
+                    <video src={vid.url} className="w-full rounded border" controls />
+                  ) : (
+                    <div className="text-xs text-muted-foreground">Video pending...</div>
+                  )}
+                </div>
                 <div className="pt-1 flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => { if (img?.url) { try { studio.setImage({ url: img.url }); } catch {} window.history.pushState({}, '', '/edit'); window.dispatchEvent(new PopStateEvent('popstate')); }}}>Open in Edit</Button>
                   <Button variant="outline" size="sm" onClick={() => { if (img?.url) { try { studio.setImage({ url: img.url }); } catch {} window.history.pushState({}, '', '/video'); window.dispatchEvent(new PopStateEvent('popstate')); }}}>

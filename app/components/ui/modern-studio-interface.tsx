@@ -87,8 +87,12 @@ export function ModernStudioInterface({
   const config = modeConfig[mode];
   const Icon = config.icon;
   const studio = useStudio();
-  const hasLastImage = !!studio.state.lastImage?.url;
-  const hasCulture = !!studio.state.culturalContext;
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => { setMounted(true); }, []);
+  const hasLastImage = mounted && !!studio.state.lastImage?.url;
+  const lastImageUrl = mounted ? studio.state.lastImage?.url : undefined;
+  const prefillOnceRef = React.useRef<string | null>(null);
+  const hasCulture = mounted && !!studio.state.culturalContext;
 
   // Simulate progress during generation
   React.useEffect(() => {
@@ -104,6 +108,27 @@ export function ModernStudioInterface({
       setProgress(0);
     }
   }, [isGenerating]);
+
+  // Auto-prefill Edit with last image when available (run once per lastImageUrl)
+  React.useEffect(() => {
+    if (mode !== 'edit-image') return;
+    if (!hasLastImage || !lastImageUrl) return;
+    if (!onFileUpload) return;
+    if (prefillOnceRef.current === lastImageUrl) return; // already prefilled for this image
+    let cancelled = false;
+    (async () => {
+      try {
+        const file = await fetchUrlToFile(lastImageUrl, 'last-image.png');
+        if (!cancelled) {
+          onFileUpload([file]);
+          prefillOnceRef.current = lastImageUrl;
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [mode, hasLastImage, lastImageUrl, onFileUpload]);
 
   const handleDrop = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -152,14 +177,20 @@ export function ModernStudioInterface({
             <h1 className="text-2xl font-semibold">{config.title}</h1>
             <p className="text-muted-foreground">{config.description}</p>
             {/* Small contextual indicators */}
-            <div className="flex items-center justify-center gap-2 mt-2">
-              {hasCulture && (
-                <Badge variant="secondary" className="text-xs">Cultural context available</Badge>
-              )}
-              {mode === 'edit-image' && hasLastImage && (
-                <Badge variant="secondary" className="text-xs">Last image ready</Badge>
-              )}
-            </div>
+            {mounted ? (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                {hasCulture && (
+                  <Badge variant="secondary" className="text-xs">Cultural context available</Badge>
+                )}
+                {mode === 'edit-image' && hasLastImage && (
+                  <Badge variant="secondary" className="text-xs">Last image ready</Badge>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center mt-2">
+                <div className="h-5 w-48 rounded bg-muted/50 animate-pulse" />
+              </div>
+            )}
           </motion.div>
 
           {/* Main Content Area - grows to fill space */}
@@ -264,7 +295,7 @@ export function ModernStudioInterface({
 
                   <Button
                     onClick={onGenerate}
-                    disabled={!prompt.trim() || isGenerating}
+                    disabled={!mounted || isGenerating || !prompt.trim()}
                     className="bg-foreground text-background hover:opacity-90"
                   >
                     {isGenerating ? (

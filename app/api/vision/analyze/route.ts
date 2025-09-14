@@ -39,10 +39,11 @@ export async function POST(req: Request) {
       {
         role: 'user',
         content: [
-          { type: 'text', text: 'Analyze this image. Extract subjects, objects, styles, colors, composition, mood, brands/logos (if any), scene, cultural cues, demographic cues, and quality considerations. Return JSON.' },
-          imageB64
-            ? { type: 'input_image', image_url: imageB64 }
-            : { type: 'input_image', image_url: imageUrl }
+          { type: 'text', text: 'Analyze this image. Extract subjects, objects, styles, colors, composition, mood, brands/logos (if any), scene, cultural cues, demographic cues, and quality considerations. Return JSON only.' },
+          {
+            type: 'image_url',
+            image_url: { url: imageB64 ? imageB64 : (imageUrl as string) }
+          }
         ]
       }
     ];
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, insights: json });
   } catch (e: any) {
-    console.error('Vision analyze error:', e);
-    return NextResponse.json({ error: 'Failed to analyze image' }, { status: 500 });
+    console.error('Vision analyze error:', e?.response?.data || e?.message || e);
+    return NextResponse.json({ error: 'Failed to analyze image', details: e?.message || 'unknown' }, { status: 500 });
   }
 }

@@ -50,6 +50,7 @@ export function ModernAll() {
     videos: Record<string, { url: string } | null>;
   }>({ images: { jp_genz_tech: null, bedouin_genz_whiteblue: null }, videos: { jp_genz_tech: null, bedouin_genz_whiteblue: null } });
   const [audiencePrompts, setAudiencePrompts] = useState<Record<string, string>>({});
+  const [videoBusy, setVideoBusy] = useState<Record<string, boolean>>({});
 
   const appendLog = useCallback((line: string) => setLog((l) => [...l, line]), []);
 
@@ -114,16 +115,27 @@ export function ModernAll() {
       setStep("gen_videos");
       appendLog("Generating audience-specific videos...");
 
-      const videoA = await generateVideoFromPrompt(promptA);
+      const videoA = await generateVideoFromPrompt(promptA, { onLog: (m) => appendLog(m) });
       setResults((r) => ({ ...r, videos: { ...r.videos, [audiences[0].key]: videoA ? { url: videoA } : null } }));
-      if (videoA) try { studio.setVideo({ url: videoA }); } catch {}
+      if (videoA) {
+        appendLog("Video A ready.");
+        try { studio.setVideo({ url: videoA }); } catch {}
+      } else {
+        appendLog("Video A not ready (timed out or failed). You can retry with the button below.");
+      }
 
-      const videoB = await generateVideoFromPrompt(promptB);
+      const videoB = await generateVideoFromPrompt(promptB, { onLog: (m) => appendLog(m) });
       setResults((r) => ({ ...r, videos: { ...r.videos, [audiences[1].key]: videoB ? { url: videoB } : null } }));
-      if (videoB) try { studio.setVideo({ url: videoB }); } catch {}
+      if (videoB) {
+        appendLog("Video B ready.");
+        try { studio.setVideo({ url: videoB }); } catch {}
+      } else {
+        appendLog("Video B not ready (timed out or failed). You can retry with the button below.");
+      }
 
+      const bothVideosReady = !!(videoA && videoB);
       setStep("done");
-      appendLog("Flow complete. Two images and two videos produced.");
+      appendLog(bothVideosReady ? "Flow complete. Two images and two videos produced." : "Flow complete. Images produced. One or more videos pending/failed – you can retry per audience.");
     } catch (e: any) {
       console.error(e);
       appendLog(`Error: ${e?.message || e}`);
@@ -229,14 +241,19 @@ export function ModernAll() {
                       variant="outline"
                       size="sm"
                       onClick={async () => {
-                        if (!prompt) return;
-                        setStep('gen_videos');
-                        appendLog(`Generating video for ${a.title}...`);
-                        const videoUrl = await generateVideoFromPrompt(prompt);
-                        setResults((r) => ({ ...r, videos: { ...r.videos, [a.key]: videoUrl ? { url: videoUrl } : null } }));
-                        if (videoUrl) try { studio.setVideo({ url: videoUrl }); } catch {}
+                        if (!prompt || videoBusy[a.key]) return;
+                        setVideoBusy((vb) => ({ ...vb, [a.key]: true }));
+                        try {
+                          setStep('gen_videos');
+                          appendLog(`Generating video for ${a.title}...`);
+                          const videoUrl = await generateVideoFromPrompt(prompt, { onLog: (m) => appendLog(m) });
+                          setResults((r) => ({ ...r, videos: { ...r.videos, [a.key]: videoUrl ? { url: videoUrl } : null } }));
+                          if (videoUrl) try { studio.setVideo({ url: videoUrl }); } catch {}
+                        } finally {
+                          setVideoBusy((vb) => ({ ...vb, [a.key]: false }));
+                        }
                       }}
-                      disabled={running || !prompt}
+                      disabled={running || !prompt || !!videoBusy[a.key]}
                     >
                       Generate Video
                     </Button>
@@ -318,7 +335,7 @@ async function generateOrEditImage(prompt: string, uploaded?: File | null): Prom
   }
 }
 
-async function generateVideoFromPrompt(prompt: string): Promise<string | null> {
+async function generateVideoFromPrompt(prompt: string, opts?: { onLog?: (m: string) => void }): Promise<string | null> {
   try {
     const form = new FormData();
     form.append('prompt', prompt);
@@ -331,26 +348,47 @@ async function generateVideoFromPrompt(prompt: string): Promise<string | null> {
 
     // poll operation
     let attempts = 0;
+    let delay = 2000; // start at 2s
     let fileUri: string | null = null;
-    while (attempts < 20) {
-      await new Promise((r) => setTimeout(r, 2000));
+    const maxAttempts = 36; // hard limit (~3–7 mins depending on backoff)
+    while (attempts < maxAttempts) {
+      await new Promise((r) => setTimeout(r, delay));
       const op = await fetch('/api/veo/operation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-      if (!op.ok) break;
-      const fresh = await op.json();
-      const done = fresh?.done;
-      if (done) {
-        const primary = fresh?.response?.candidates?.[0]?.content?.parts?.[0]?.file_data?.file_uri;
-        const alt = fresh?.response?.candidates?.[0]?.content?.parts?.find((p: any) => p?.video_metadata?.file_uri)?.video_metadata?.file_uri;
-        fileUri = primary || alt || null;
-        break;
+      if (op.ok) {
+        const fresh = await op.json();
+        const done = fresh?.done;
+        if (done) {
+          const primary = fresh?.response?.candidates?.[0]?.content?.parts?.[0]?.file_data?.file_uri;
+          const alt = fresh?.response?.candidates?.[0]?.content?.parts?.find((p: any) => p?.video_metadata?.file_uri)?.video_metadata?.file_uri;
+          const fromList = Array.isArray(fresh?.uris) && fresh.uris.length > 0 ? fresh.uris[0] : null;
+          fileUri = primary || alt || fromList || null;
+          break;
+        } else {
+          opts?.onLog?.(`Video operation pending... (${attempts + 1})`);
+        }
+      } else {
+        opts?.onLog?.(`Operation check failed (attempt ${attempts + 1})`);
       }
+      // exponential backoff up to 8s
+      delay = Math.min(delay + 1000, 8000);
       attempts++;
     }
 
-    if (!fileUri) return null;
+    if (!fileUri) {
+      opts?.onLog?.('Timed out waiting for video operation to complete.');
+      return null;
+    }
     const dl = await fetch('/api/veo/download', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uri: fileUri, save: true }) });
-    if (!dl.ok) return null;
+    if (!dl.ok) {
+      opts?.onLog?.(`Download/save failed: ${dl.status}`);
+      return null;
+    }
     const saved = await dl.json();
+    if (!saved?.url) {
+      opts?.onLog?.('Download succeeded but no URL returned by server.');
+    } else {
+      opts?.onLog?.(`Saved video URL: ${saved.url}`);
+    }
     return saved?.url || null;
   } catch {
     return null;

@@ -6,6 +6,7 @@ import { StudioMode } from '@/lib/types';
 import { ModernNavbar } from '@/components/ui/modern-navbar';
 import { ModernStudioInterface } from '@/components/ui/modern-studio-interface';
 import { ModernGallery } from '@/components/ui/modern-gallery';
+import { ModernCultural } from '@/components/ui/modern-cultural';
 import { MOCK_VIDEOS } from '@/lib/config';
 
 // Simplified state management
@@ -59,6 +60,8 @@ export default function ModernAlchemyStudio() {
   const pathToMode = (path: string): StudioMode => {
     const seg = path.replace(/\/+$/, '').split('/').filter(Boolean)[0] || '';
     switch (seg) {
+      case 'cultural':
+        return 'cultural';
       case 'create':
         return 'create-image';
       case 'edit':
@@ -74,6 +77,8 @@ export default function ModernAlchemyStudio() {
 
   const modeToPath = (mode: StudioMode): string => {
     switch (mode) {
+      case 'cultural':
+        return '/cultural';
       case 'create-image':
         return '/create';
       case 'edit-image':
@@ -485,6 +490,8 @@ export default function ModernAlchemyStudio() {
         >
           {state.mode === 'product-gallery' ? (
             <ModernGallery items={galleryItems} onDelete={handleDelete} />
+          ) : state.mode === 'cultural' ? (
+            <ModernCultural />
           ) : (
             <ModernStudioInterface
               mode={state.mode}

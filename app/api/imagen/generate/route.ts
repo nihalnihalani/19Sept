@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No image returned" }, { status: 500 });
     }
 
-    // 1) Persist image to public/
+    // 1) Persist image to public/ (best-effort local cache)
     const mimeType = image.mimeType || "image/png";
     const ext = mimeType === "image/jpeg" ? "jpg" : mimeType === "image/webp" ? "webp" : "png";
     const fileName = `generated_image_${Date.now()}.${ext}`;
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     const fileBuffer = Buffer.from(image.imageBytes, "base64");
     await writeFile(publicPath, fileBuffer);
 
-    // 2) Insert metadata into Neo4j (best-effort; do not fail the request if DB fails)
+    // 2) Insert image bytes + metadata into Neo4j and point URL to streaming endpoint
     const session = getSession();
     let mediaRecord: any = null;
     try {
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
         "CREATE INDEX tag_name IF NOT EXISTS FOR (t:Tag) ON (t.name)"
       );
       const createdAt = new Date().toISOString();
+      const id = `media-${Date.now()}`;
       const result = await session.run(
         `MERGE (m:Media {id: $id})
          ON CREATE SET m.createdAt = datetime($createdAt),
@@ -59,24 +60,30 @@ export async function POST(req: Request) {
                        m.type = 'image',
                        m.title = $title,
                        m.description = $description,
-                       m.size = $size
+                       m.size = $size,
+                       m.imageBytes = $imageBytes,
+                       m.mimeType = $mimeType
          ON MATCH SET  m.url = $url,
                        m.type = 'image',
                        m.title = $title,
                        m.description = $description,
-                       m.size = $size
+                       m.size = $size,
+                       m.imageBytes = $imageBytes,
+                       m.mimeType = $mimeType
          WITH m
          UNWIND $tags AS tag
          MERGE (t:Tag {name: tag})
          MERGE (m)-[:TAGGED_WITH]->(t)
          RETURN m { .* } AS media`,
         {
-          id: `media-${Date.now()}`,
-          url: `/${fileName}`,
+          id,
+          url: `/api/media/file?id=${id}`,
           title: prompt.slice(0, 80),
           description: `Generated from prompt: ${prompt}`,
           createdAt,
           size: fileBuffer.length,
+          imageBytes: image.imageBytes,
+          mimeType,
           tags: prompt
             .toLowerCase()
             .split(/[^a-z0-9]+/g)
@@ -91,12 +98,12 @@ export async function POST(req: Request) {
       await session.close();
     }
 
-    // 3) Return both the base64 (for backward compatibility) and the saved URL
+    // 3) Return both the base64 (for backward compatibility) and the streamable URL
     return NextResponse.json({
       image: {
         imageBytes: image.imageBytes,
         mimeType,
-        url: `/${fileName}`,
+        url: mediaRecord?.url || `/api/media/file?id=${mediaRecord?.id ?? ''}`,
       },
       media: mediaRecord,
     });

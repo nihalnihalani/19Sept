@@ -14,6 +14,7 @@ export interface Video {
  * Studio modes for different AI generation types
  */
 export type StudioMode =
+  | "cultural"
   | "create-image"
   | "edit-image"
   | "compose-image"

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   // Only rewrite exact top-level paths
-  if (["/create", "/edit", "/video", "/gallery", "/compose"].includes(pathname)) {
+  if (["/cultural", "/create", "/edit", "/video", "/gallery", "/compose"].includes(pathname)) {
     const url = req.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.rewrite(url);
@@ -14,5 +14,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/create", "/edit", "/video", "/gallery", "/compose"],
+  matcher: ["/cultural", "/create", "/edit", "/video", "/gallery", "/compose"],
 };

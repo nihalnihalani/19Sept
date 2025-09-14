@@ -13,7 +13,8 @@ import {
   FileImage, 
   Menu,
   Sun,
-  Moon
+  Moon,
+  Globe
 } from 'lucide-react';
 import { StudioMode } from '@/lib/types';
 
@@ -23,6 +24,11 @@ interface ModernNavbarProps {
 }
 
 const navigationItems = [
+  {
+    id: 'cultural' as StudioMode,
+    label: 'Cultural',
+    icon: Globe,
+  },
   {
     id: 'create-image' as StudioMode,
     label: 'Create',
@@ -76,7 +82,7 @@ export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
         {/* Desktop Navigation */}
         <div className="hidden md:block">
           <Tabs value={currentMode} onValueChange={onModeChange}>
-            <TabsList className="grid w-full grid-cols-4 rounded-full border border-border bg-muted/50 p-1">
+            <TabsList className="grid w-full grid-cols-5 rounded-full border border-border bg-muted/50 p-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 return (

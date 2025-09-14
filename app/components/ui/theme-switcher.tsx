@@ -11,7 +11,7 @@ interface ThemeSwitcherProps {
 }
 
 export function ThemeSwitcher({ onThemeChange }: ThemeSwitcherProps) {
-  const [currentTheme, setCurrentTheme] = useState<Theme>('light');
+  const [currentTheme, setCurrentTheme] = useState<Theme>('dark');
 
   const themes = [
     { id: 'light' as Theme, icon: Sun, name: 'Light' },
@@ -29,15 +29,10 @@ export function ThemeSwitcher({ onThemeChange }: ThemeSwitcherProps) {
   };
 
   useEffect(() => {
-    // Initialize theme on mount - default to light mode
-    const isDark = document.documentElement.classList.contains('dark');
-    const initialTheme = isDark ? 'dark' : 'light';
-    setCurrentTheme(initialTheme);
-    
-    // Ensure document starts with light mode by default
-    if (!isDark) {
-      document.documentElement.className = '';
-    }
+    // Initialize theme on mount - default to dark mode
+    const root = document.documentElement;
+    root.classList.add('dark');
+    setCurrentTheme('dark');
   }, []);
 
   return (

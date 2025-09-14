@@ -120,7 +120,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Persist edited image to public/
+    // Persist edited image to public/ (best-effort local cache)
     const ext = responseMimeType.includes("jpeg") || responseMimeType.includes("jpg")
       ? "jpg"
       : responseMimeType.includes("webp")
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(imageData, "base64");
     await writeFile(publicPath, buffer);
 
-    // Insert into Neo4j
+    // Insert into Neo4j with inline image bytes and streaming URL
     const session = getSession();
     let media: any = null;
     try {
@@ -142,6 +142,7 @@ export async function POST(req: Request) {
         "CREATE INDEX tag_name IF NOT EXISTS FOR (t:Tag) ON (t.name)"
       );
       const createdAt = new Date().toISOString();
+      const id = `media-${Date.now()}`;
       const result = await session.run(
         `MERGE (m:Media {id: $id})
          ON CREATE SET m.createdAt = datetime($createdAt),
@@ -149,24 +150,30 @@ export async function POST(req: Request) {
                        m.type = 'image',
                        m.title = $title,
                        m.description = $description,
-                       m.size = $size
+                       m.size = $size,
+                       m.imageBytes = $imageBytes,
+                       m.mimeType = $mimeType
          ON MATCH SET  m.url = $url,
                        m.type = 'image',
                        m.title = $title,
                        m.description = $description,
-                       m.size = $size
+                       m.size = $size,
+                       m.imageBytes = $imageBytes,
+                       m.mimeType = $mimeType
          WITH m
          UNWIND $tags AS tag
          MERGE (t:Tag {name: tag})
          MERGE (m)-[:TAGGED_WITH]->(t)
          RETURN m { .* } AS media`,
         {
-          id: `media-${Date.now()}`,
-          url: `/${fileName}`,
+          id,
+          url: `/api/media/file?id=${id}`,
           title: "Edited Image",
           description: "Edited via Gemini 2.5 Flash",
           createdAt,
           size: buffer.length,
+          imageBytes: imageData,
+          mimeType: responseMimeType,
           tags: ["edited", "gemini", "flash"],
         }
       );
@@ -179,7 +186,7 @@ export async function POST(req: Request) {
       image: {
         imageBytes: imageData,
         mimeType: responseMimeType,
-        url: `/${fileName}`,
+        url: `/api/media/file?id=${media?.id ?? ''}`,
       },
       media,
     });

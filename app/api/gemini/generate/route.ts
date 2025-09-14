@@ -69,6 +69,7 @@ export async function POST(req: Request) {
       const fileName = `generated_image_edit_${Date.now()}.${ext}`;
       const publicPath = path.join(process.cwd(), "public", fileName);
       const buffer = Buffer.from(imageBytes, "base64");
+      // Best-effort local cache
       await writeFile(publicPath, buffer);
 
       const session = getSession();
@@ -81,6 +82,7 @@ export async function POST(req: Request) {
           "CREATE INDEX tag_name IF NOT EXISTS FOR (t:Tag) ON (t.name)"
         );
         const createdAt = new Date().toISOString();
+        const id = `media-${Date.now()}`;
         const result = await session.run(
           `MERGE (m:Media {id: $id})
            ON CREATE SET m.createdAt = datetime($createdAt),
@@ -88,24 +90,30 @@ export async function POST(req: Request) {
                          m.type = 'image',
                          m.title = $title,
                          m.description = $description,
-                         m.size = $size
+                         m.size = $size,
+                         m.imageBytes = $imageBytes,
+                         m.mimeType = $mimeType
            ON MATCH SET  m.url = $url,
                          m.type = 'image',
                          m.title = $title,
                          m.description = $description,
-                         m.size = $size
+                         m.size = $size,
+                         m.imageBytes = $imageBytes,
+                         m.mimeType = $mimeType
            WITH m
            UNWIND $tags AS tag
            MERGE (t:Tag {name: tag})
            MERGE (m)-[:TAGGED_WITH]->(t)
            RETURN m { .* } AS media`,
           {
-            id: `media-${Date.now()}`,
-            url: `/${fileName}`,
+            id,
+            url: `/api/media/file?id=${id}`,
             title: title.slice(0, 80),
             description: `Edited via Gemini from prompt: ${prompt}`,
             createdAt,
             size: buffer.length,
+            imageBytes,
+            mimeType,
             tags: prompt
               .toLowerCase()
               .split(/[^a-z0-9]+/g)

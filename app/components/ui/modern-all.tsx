@@ -134,7 +134,7 @@ export function ModernAll() {
 
       // 2) Cultural targeting via Cultural API per demographic
       setStep("cultural");
-      appendLog(`Fetching cultural signals for ${currentDemographics.length} demographics...`);
+      appendLog(`Fetching cultural signals for default campaign + ${currentDemographics.length} demographics...`);
 
       const baseSummary = summarizeInsights(analyzed.insights);
       const perAudiencePrompt: Record<string, string> = {};
@@ -155,7 +155,7 @@ export function ModernAll() {
 
       // 3) Generate images sequentially
       setStep("gen_images");
-      appendLog("Generating images one-by-one...");
+      appendLog("Generating images one-by-one for default campaign + demographics...");
       for (const d of currentDemographics) {
         const prompt = perAudiencePrompt[d.key];
         appendLog(`Generating image for ${d.title}...`);
@@ -166,7 +166,7 @@ export function ModernAll() {
 
       // 4) Generate videos sequentially
       setStep("gen_videos");
-      appendLog("Generating videos one-by-one...");
+      appendLog("Generating videos one-by-one for default campaign + demographics...");
       let allVideos = true;
       for (const d of currentDemographics) {
         const prompt = perAudiencePrompt[d.key];
@@ -182,7 +182,7 @@ export function ModernAll() {
       }
 
       setStep("done");
-      appendLog(allVideos ? `Flow complete. ${currentDemographics.length} images and ${currentDemographics.length} videos produced.` : `Flow complete. Images produced. One or more videos pending/failed – retry per demographic.`);
+      appendLog(allVideos ? `Flow complete. ${currentDemographics.length} demographic images and videos produced.` : `Flow complete. Images produced. One or more videos pending/failed – retry per demographic.`);
     } catch (e: any) {
       console.error(e);
       appendLog(`Error: ${e?.message || e}`);
@@ -277,51 +277,36 @@ export function ModernAll() {
               >
                 Plan Campaigns
               </Button>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-muted-foreground">Count</label>
-                <select
-                  className="text-sm border rounded px-2 py-1 bg-background"
-                  defaultValue="3"
-                  onChange={(e) => {
-                    const n = Math.max(1, Math.min(6, parseInt(e.target.value || '3', 10)));
-                    const templates = [
-                      "1. Japan (Tokyo) <tech-forward Gen Z, neon>",
-                      "2. India (Bengaluru) <college students, festival vibe>",
-                      "3. Norway (Oslo) <eco-conscious millennials, minimal>",
-                      "4. Brazil (São Paulo) <urban youth, vibrant colors>",
-                      "5. USA (NYC) <young professionals, sleek modern>",
-                      "6. UAE (Dubai) <luxury-focused, premium aesthetics>"
-                    ];
-                    const block = templates.slice(0, n).join('\n');
-                    setChatInput(`Generate ad campaign variants for:\n${block}`);
-                  }}
-                >
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                </select>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const n = 3; // default quick-fill
-                    const templates = [
-                      "1. Japan (Tokyo) <tech-forward Gen Z, neon>",
-                      "2. India (Bengaluru) <college students, festival vibe>",
-                      "3. Norway (Oslo) <eco-conscious millennials, minimal>",
-                      "4. Brazil (São Paulo) <urban youth, vibrant colors>",
-                      "5. USA (NYC) <young professionals, sleek modern>",
-                      "6. UAE (Dubai) <luxury-focused, premium aesthetics>"
-                    ];
-                    const block = templates.slice(0, n).join('\n');
-                    setChatInput(`Generate ad campaign variants for:\n${block}`);
-                  }}
-                >
-                  Auto-fill
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const resp = await fetch('/api/demographics/expand', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ input: chatInput })
+                    });
+                    if (!resp.ok) throw new Error(await resp.text());
+                    const data = await resp.json();
+                    const list = Array.isArray(data?.demographics) ? data.demographics : [];
+                    const parsed = list.map((d: any, idx: number) => ({
+                      key: `${idx + 1}-${String(d.title || d.country || 'untitled').toLowerCase().replace(/\s+/g, '-')}`,
+                      title: String(d.title || d.country || 'Untitled'),
+                      description: String(d.description || ''),
+                      city: d.city || undefined,
+                      country: d.country || undefined,
+                    }));
+                    setDemographics(parsed);
+                    appendLog(`Auto-filled ${parsed.length} demographics using AI.`);
+                  } catch (e: any) {
+                    appendLog(`Auto-fill failed: ${e?.message || e}`);
+                  }
+                }}
+                disabled={running}
+              >
+                Auto-fill (AI)
+              </Button>
               <Button
                 size="sm"
                 onClick={() => {
@@ -488,15 +473,32 @@ function buildAudiencePrompt(baseSummary: string, culture: any, audience: Demogr
 
 // Parse user chat into a list of demographics
 function parseCampaignPlan(input: string): DemographicPlan[] {
-  const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const lines = input
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(Boolean)
+    // filter out obvious headers or control text
+    .filter(l => !/^generate\s+ad\s+campaign\s+variants\s+for\s*:?/i.test(l))
+    .filter(l => !/^plan\s*\+\s*run$/i.test(l))
+    .filter(l => !/^plan\s+campaigns$/i.test(l));
   const items: DemographicPlan[] = [];
   for (const raw of lines) {
     // Expect patterns like: "1. Japan (Tokyo) <details here>" or "Japan <details>"
     const line = raw.replace(/^\d+\.?\s*/, "");
     // Extract details in angle brackets
     const detailsMatch = line.match(/<([^>]*)>/);
-    const description = detailsMatch ? detailsMatch[1].trim() : "";
-    const withoutDetails = line.replace(/<[^>]*>/g, "").trim();
+    let description = detailsMatch ? detailsMatch[1].trim() : "";
+    let withoutDetails = line.replace(/<[^>]*>/g, "").trim();
+    // If there is trailing text after a ) and no <...>, treat it as description
+    if (!description) {
+      const afterParen = withoutDetails.match(/\)(.*)$/);
+      if (afterParen && afterParen[1]) {
+        const tail = afterParen[1].trim();
+        if (tail) description = tail;
+      }
+      // strip the tail we just captured from withoutDetails
+      withoutDetails = withoutDetails.replace(/\)(.*)$/, ")").trim();
+    }
     // Extract location in parentheses
     const locMatch = withoutDetails.match(/^(.*?)\s*\(([^)]*)\)/);
     let title = withoutDetails;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { writeFile } from "fs/promises";
 import path from "path";
 import { getSession } from "@/lib/neo4j";
@@ -8,7 +8,7 @@ if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is not set.");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 export async function POST(req: Request) {
   try {
@@ -94,19 +94,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image-preview",
-      contents: contents,
+    // Use Gemini image-preview model via @google/generative-ai
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-image-preview" });
+    const parts: any[] = [];
+    for (const c of contents) {
+      if ((c as any).text) parts.push({ text: (c as any).text });
+      if ((c as any).inlineData) parts.push({ inlineData: (c as any).inlineData });
+    }
+    const response = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts,
+        },
+      ],
     });
 
     // Process the response to extract the image
     let imageData = null;
     let responseMimeType = "image/png";
 
-    for (const part of response.candidates[0].content.parts) {
-      if (part.text) {
+    const partsOut = (response as any)?.response?.candidates?.[0]?.content?.parts || [];
+    for (const part of partsOut) {
+      if (part?.text) {
         console.log("Generated text:", part.text);
-      } else if (part.inlineData) {
+      } else if (part?.inlineData) {
         imageData = part.inlineData.data;
         responseMimeType = part.inlineData.mimeType || "image/png";
         break;

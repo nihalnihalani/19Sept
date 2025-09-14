@@ -215,27 +215,24 @@ class AlchemyMCPServer {
   private async editImage(args: any) {
     const { prompt, image_url } = args;
 
-    // Convert URL to file if needed
-    let imageFile: File;
+    // Build multipart form data with base64 fields to avoid DOM File usage
+    const formData = new FormData();
+    formData.append('prompt', prompt);
+
     if (String(image_url).startsWith('data:')) {
-      // Handle base64 data URL
       const [header, base64] = String(image_url).split(',');
       const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/png';
-      const buffer = Buffer.from(base64, 'base64');
-      imageFile = new File([buffer], 'image.png', { type: mimeType } as any);
-    } else {
-      // Fetch from URL
+      formData.append('imageBase64', base64);
+      formData.append('imageMimeType', mimeType);
+    } else if (image_url) {
       const imageResponse = await fetch(String(image_url));
       if (!imageResponse.ok) {
         throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
       }
-      const buffer = await imageResponse.arrayBuffer();
-      imageFile = new File([buffer], 'image.png', { type: 'image/png' } as any);
+      const buff = Buffer.from(await imageResponse.arrayBuffer());
+      formData.append('imageBase64', buff.toString('base64'));
+      formData.append('imageMimeType', 'image/png');
     }
-
-    const formData = new FormData();
-    formData.append('prompt', prompt);
-    formData.append('imageFile', imageFile);
 
     const response = await fetch(`${BASE_URL}/api/gemini/edit`, {
       method: 'POST',

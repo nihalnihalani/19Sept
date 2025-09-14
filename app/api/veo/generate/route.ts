@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is not set.");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Placeholder instance for future support if videos become available
+const _ai = new GoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: Request) {
   try {
@@ -48,18 +49,14 @@ export async function POST(req: Request) {
       image = { imageBytes: cleaned, mimeType: imageMimeType || "image/png" };
     }
 
-    const operation = await ai.models.generateVideos({
-      model,
-      prompt,
-      ...(image ? { image } : {}),
-      config: {
-        ...(aspectRatio ? { aspectRatio } : {}),
-        ...(negativePrompt ? { negativePrompt } : {}),
+    // Video generation is not supported via @google/generative-ai SDK at this time.
+    return NextResponse.json(
+      {
+        error: "Video generation is not supported via the current SDK",
+        note: "The Veo endpoint has been disabled while migrating away from @google/genai. Please switch to image generation endpoints.",
       },
-    });
-
-    const name = (operation as unknown as { name?: string }).name;
-    return NextResponse.json({ name });
+      { status: 501 }
+    );
   } catch (error: unknown) {
     console.error("Error starting Veo generation:", error);
     return NextResponse.json(

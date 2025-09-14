@@ -5,8 +5,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
-import { GoogleGenerativeAI } from '@google/genai';
+  type CallToolRequest,
+} from '@modelcontextprotocol/sdk/types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 if (!GEMINI_API_KEY) {
@@ -14,7 +16,9 @@ if (!GEMINI_API_KEY) {
   process.exit(1);
 }
 
-const ai = new GoogleGenerativeAI({ apiKey: GEMINI_API_KEY });
+const ai = new GoogleGenerativeAI(GEMINI_API_KEY as string);
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
+const openai = OPENAI_KEY ? new OpenAI({ apiKey: OPENAI_KEY }) : null;
 
 class StandaloneAlchemyMCP {
   private server: Server;
@@ -54,17 +58,33 @@ class StandaloneAlchemyMCP {
             },
             required: ['prompt', 'image_url']
           }
+        },
+        {
+          name: 'get_cultural_insights',
+          description: 'Get cultural intelligence for a location using OpenAI (standalone)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              city: { type: 'string' },
+              country: { type: 'string' },
+              business_type: { type: 'string' },
+              target_audience: { type: 'string' }
+            },
+            required: ['city', 'country']
+          }
         }
       ]
     }));
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
       try {
         switch (request.params.name) {
           case 'generate_image':
             return await this.generateImage(request.params.arguments as any);
           case 'edit_image':
             return await this.editImage(request.params.arguments as any);
+          case 'get_cultural_insights':
+            return await this.getCulturalInsights(request.params.arguments as any);
           default:
             throw new Error(`Unknown tool: ${request.params.name}`);
         }
@@ -79,18 +99,21 @@ class StandaloneAlchemyMCP {
     if (!prompt) throw new Error('Missing prompt');
 
     if (model === 'imagen') {
-      // Imagen 4 text-to-image via @google/genai (generateImages)
-      // Note: exact model id may vary by access; using a common public preview id
-      const response: any = await (ai as any).models.generateImages({
-        model: 'imagen-4.0-fast-generate-001',
-        prompt,
-        config: { aspectRatio: aspect_ratio }
+      // Fallback to Gemini image-preview since direct Imagen via this SDK is not supported
+      const modelId = 'gemini-2.5-flash-image-preview';
+      const modelInstance: any = (ai as any).getGenerativeModel({ model: modelId });
+      const result = await modelInstance.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
       });
 
-      const image = response?.generatedImages?.[0]?.image;
-      if (!image?.imageBytes) throw new Error('No image generated');
-      const dataUrl = `data:${image.mimeType || 'image/png'};base64,${image.imageBytes}`;
-      return { content: [{ type: 'text', text: `✅ Imagen 4 image\n\nPrompt: ${prompt}\n\n${dataUrl}` }] };
+      const parts = result?.response?.candidates?.[0]?.content?.parts || [];
+      let inlineData: any = null;
+      for (const p of parts) {
+        if (p?.inlineData?.data) { inlineData = p.inlineData; break; }
+      }
+      if (!inlineData?.data) throw new Error('No image generated');
+      const dataUrl = `data:${inlineData.mimeType || 'image/png'};base64,${inlineData.data}`;
+      return { content: [{ type: 'text', text: `✅ Image (Gemini fallback for Imagen)\n\nPrompt: ${prompt}\n\n${dataUrl}` }] };
     }
 
     // Gemini image generation (image preview model emits inline data)
@@ -146,6 +169,28 @@ class StandaloneAlchemyMCP {
 
     const dataUrl = `data:${inlineData.mimeType || 'image/png'};base64,${inlineData.data}`;
     return { content: [{ type: 'text', text: `✅ Edited image\n\nInstructions: ${prompt}\n\n${dataUrl}` }] };
+  }
+
+  private async getCulturalInsights(args: any) {
+    const { city, country, business_type, target_audience } = args || {};
+    if (!city || !country) throw new Error('Missing city or country');
+    if (!openai) throw new Error('OPENAI_API_KEY not set on server');
+
+    const sys = `You are a cultural intelligence assistant. Return concise, practical insights for marketing/creative.
+Fields: profile, aesthetics, communication, themes.
+Keep each field under ~6 bullet points. No markdown code fences.`;
+    const prompt = `City: ${city}\nCountry: ${country}\nBusiness: ${business_type || 'n/a'}\nAudience: ${target_audience || 'general'}\nProvide cultural insights with fields: profile, aesthetics, communication, themes.`;
+    const resp = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: sys },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 700
+    });
+    const text = resp.choices?.[0]?.message?.content || 'No insights generated';
+    return { content: [{ type: 'text', text }] };
   }
 
   async run() {

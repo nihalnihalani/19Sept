@@ -29,7 +29,7 @@
     "clean:cache": "rm -rf .next && rm -rf node_modules/.cache || true"
   },
   "dependencies": {
-    "@google/genai": "^1.8.0",
+    "@google/generative-ai": "^0.19.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-progress": "^1.1.7",

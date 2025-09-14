@@ -9,24 +9,13 @@ import { Input } from "@/components/ui/input";
 import { useStudio } from "@/lib/useStudio";
 import { Loader2, Upload, Wand2, Play, CheckCircle2, AlertTriangle } from "lucide-react";
 
-interface AudiencePlan {
-  key: "jp_genz_tech" | "bedouin_genz_whiteblue";
-  title: string;
-  description: string;
+interface DemographicPlan {
+  key: string; // unique key, e.g., "1-japan"
+  title: string; // e.g., "Japan"
+  description: string; // free-form extra details
+  city?: string;
+  country?: string;
 }
-
-const audiences: AudiencePlan[] = [
-  {
-    key: "jp_genz_tech",
-    title: "Japanese Gen Z (Tech-forward)",
-    description: "Urban, tech-savvy Gen Z in Japan; emphasize innovation, neon, minimal yet playful composition, anime/cyberpunk influences."
-  },
-  {
-    key: "bedouin_genz_whiteblue",
-    title: "Bedouin Gen Z (White/Blue Traditional)",
-    description: "Desert-dwelling Bedouin Gen Z; cool white and blue attire, sand/sky palette, cultural pride, tradition-meets-modern."
-  }
-];
 
 export function ModernAll() {
   const studio = useStudio();
@@ -48,9 +37,18 @@ export function ModernAll() {
   const [results, setResults] = useState<{
     images: Record<string, { url: string } | null>;
     videos: Record<string, { url: string } | null>;
-  }>({ images: { jp_genz_tech: null, bedouin_genz_whiteblue: null }, videos: { jp_genz_tech: null, bedouin_genz_whiteblue: null } });
+  }>({ images: {}, videos: {} });
   const [audiencePrompts, setAudiencePrompts] = useState<Record<string, string>>({});
   const [videoBusy, setVideoBusy] = useState<Record<string, boolean>>({});
+
+  // Chat-driven campaign planning
+  const [chatInput, setChatInput] = useState<string>(
+    `Generate ad campaign variants for:
+1. Japan (Tokyo) <tech-forward Gen Z, neon, anime/cyberpunk influences>
+2. India (Bengaluru) <college students, vibrant colors, festival mood>
+3. Norway (Oslo) <eco-conscious millennials, minimal, nature aesthetics>`
+  );
+  const [demographics, setDemographics] = useState<DemographicPlan[]>([]);
 
   const appendLog = useCallback((line: string) => setLog((l) => [...l, line]), []);
 
@@ -62,6 +60,15 @@ export function ModernAll() {
 
   const runFlow = async () => {
     if (!file && !imageUrl) return;
+    if (demographics.length === 0) {
+      // try parsing from current chat input as a convenience
+      const parsed = parseCampaignPlan(chatInput);
+      setDemographics(parsed);
+      if (parsed.length === 0) {
+        appendLog("Please define at least one demographic in the chat panel.");
+        return;
+      }
+    }
     setRunning(true);
     setStep("analyze");
     setLog([]);
@@ -81,61 +88,57 @@ export function ModernAll() {
       const analyzed = await analyze.json();
       setInsights(analyzed.insights);
 
-      // 2) Cultural targeting via existing Cultural API to seed prompts (can reuse city/country if desired)
+      // 2) Cultural targeting via Cultural API per demographic
       setStep("cultural");
-      appendLog("Fetching cultural signals for both audiences...");
-      // We call cultural intelligence for a neutral location to get structures; then tailor audiences below
-      const culturalResp = await fetch("/api/cultural/intelligence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ city: "Tokyo", country: "Japan", analysisDepth: "basic" })
-      });
-      const cultural = culturalResp.ok ? await culturalResp.json() : { analysis: {} };
-      try { if (cultural?.analysis) studio.setCulturalContext(cultural.analysis); } catch {}
+      appendLog(`Fetching cultural signals for ${demographics.length} demographics...`);
 
-      // Build prompts for each audience
       const baseSummary = summarizeInsights(analyzed.insights);
-      const promptA = buildAudiencePrompt(baseSummary, cultural.analysis, audiences[0]);
-      const promptB = buildAudiencePrompt(baseSummary, cultural.analysis, audiences[1]);
-      setAudiencePrompts({ [audiences[0].key]: promptA, [audiences[1].key]: promptB });
+      const perAudiencePrompt: Record<string, string> = {};
 
-      // 3) Generate two images (edit if file exists; else generate)
+      for (const d of demographics) {
+        const city = d.city || d.title;
+        const country = d.country || d.title;
+        const culturalResp = await fetch("/api/cultural/intelligence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ city, country, analysisDepth: "basic" })
+        });
+        const cultural = culturalResp.ok ? await culturalResp.json() : { analysis: {} };
+        try { if (cultural?.analysis) studio.setCulturalContext(cultural.analysis); } catch {}
+        perAudiencePrompt[d.key] = buildAudiencePrompt(baseSummary, cultural.analysis, d);
+      }
+      setAudiencePrompts(perAudiencePrompt);
+
+      // 3) Generate images sequentially
       setStep("gen_images");
-      appendLog("Generating audience-specific images...");
+      appendLog("Generating images one-by-one...");
+      for (const d of demographics) {
+        const prompt = perAudiencePrompt[d.key];
+        appendLog(`Generating image for ${d.title}...`);
+        const url = await generateOrEditImage(prompt, file);
+        setResults((r) => ({ ...r, images: { ...r.images, [d.key]: url ? { url } : null } }));
+        if (url) try { studio.setImage({ url }); } catch {}
+      }
 
-      const imageA = await generateOrEditImage(promptA, file);
-      setResults((r) => ({ ...r, images: { ...r.images, [audiences[0].key]: imageA ? { url: imageA } : null } }));
-      if (imageA) try { studio.setImage({ url: imageA }); } catch {}
-
-      const imageB = await generateOrEditImage(promptB, file);
-      setResults((r) => ({ ...r, images: { ...r.images, [audiences[1].key]: imageB ? { url: imageB } : null } }));
-      if (imageB) try { studio.setImage({ url: imageB }); } catch {}
-
-      // 4) Generate two videos (prompt can re-use audience prompt; optionally include image URLs if your video API supports it)
+      // 4) Generate videos sequentially
       setStep("gen_videos");
-      appendLog("Generating audience-specific videos...");
-
-      const videoA = await generateVideoFromPrompt(promptA, { onLog: (m) => appendLog(m) });
-      setResults((r) => ({ ...r, videos: { ...r.videos, [audiences[0].key]: videoA ? { url: videoA } : null } }));
-      if (videoA) {
-        appendLog("Video A ready.");
-        try { studio.setVideo({ url: videoA }); } catch {}
-      } else {
-        appendLog("Video A not ready (timed out or failed). You can retry with the button below.");
+      appendLog("Generating videos one-by-one...");
+      let allVideos = true;
+      for (const d of demographics) {
+        const prompt = perAudiencePrompt[d.key];
+        appendLog(`Generating video for ${d.title}...`);
+        const vurl = await generateVideoFromPrompt(prompt, { onLog: (m) => appendLog(m) });
+        setResults((r) => ({ ...r, videos: { ...r.videos, [d.key]: vurl ? { url: vurl } : null } }));
+        if (vurl) {
+          try { studio.setVideo({ url: vurl }); } catch {}
+        } else {
+          allVideos = false;
+          appendLog(`${d.title} video pending/failed – you can retry from its card.`);
+        }
       }
 
-      const videoB = await generateVideoFromPrompt(promptB, { onLog: (m) => appendLog(m) });
-      setResults((r) => ({ ...r, videos: { ...r.videos, [audiences[1].key]: videoB ? { url: videoB } : null } }));
-      if (videoB) {
-        appendLog("Video B ready.");
-        try { studio.setVideo({ url: videoB }); } catch {}
-      } else {
-        appendLog("Video B not ready (timed out or failed). You can retry with the button below.");
-      }
-
-      const bothVideosReady = !!(videoA && videoB);
       setStep("done");
-      appendLog(bothVideosReady ? "Flow complete. Two images and two videos produced." : "Flow complete. Images produced. One or more videos pending/failed – you can retry per audience.");
+      appendLog(allVideos ? `Flow complete. ${demographics.length} images and ${demographics.length} videos produced.` : `Flow complete. Images produced. One or more videos pending/failed – retry per demographic.`);
     } catch (e: any) {
       console.error(e);
       appendLog(`Error: ${e?.message || e}`);
@@ -155,46 +158,114 @@ export function ModernAll() {
           </div>
           <Badge variant="secondary" className="text-xs">All-in-One Pipeline</Badge>
         </div>
-        <h1 className="text-2xl font-semibold">Upload → Analyze → Target → 2 Images → 2 Videos</h1>
-        <p className="text-muted-foreground">Runs the full pipeline for two cultural audiences using OpenAI Vision + Qloo + your existing generators.</p>
+        <h1 className="text-2xl font-semibold">Upload → Analyze → Target (Chat) → N Images → N Videos</h1>
+        <p className="text-muted-foreground">Define demographics in the chat panel. We analyze your image, fetch Qloo cultural signals per demographic, then generate images and videos sequentially.</p>
       </motion.div>
 
-      {/* Upload */}
-      <Card>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e) => {
-                  const files = Array.from((e.target as HTMLInputElement).files || []);
-                  if (files[0]) handleFile(files[0]);
-                };
-                input.click();
-              }}
-            >
-              <Upload className="h-4 w-4 mr-2" /> Upload Image
-            </Button>
-            {file && <span className="text-sm text-muted-foreground">{file.name}</span>}
-          </div>
-          {imageUrl && (
-            <div className="mt-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imageUrl} alt="input" className="max-h-64 rounded border" />
+      {/* Top Split: Image (left) + Chat (right) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Upload + Preview */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = (e) => {
+                    const files = Array.from((e.target as HTMLInputElement).files || []);
+                    if (files[0]) handleFile(files[0]);
+                  };
+                  input.click();
+                }}
+              >
+                <Upload className="h-4 w-4 mr-2" /> Upload Image
+              </Button>
+              {file && <span className="text-sm text-muted-foreground">{file.name}</span>}
             </div>
-          )}
-          <div className="pt-2">
-            <Button onClick={runFlow} disabled={running || (!file && !imageUrl)}>
-              {running ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Running Flow...</>) : (<>Run Full Flow</>)}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            {imageUrl && (
+              <div className="mt-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageUrl} alt="input" className="max-h-64 rounded border" />
+              </div>
+            )}
+            <div className="pt-2">
+              <Button onClick={runFlow} disabled={running || (!file && !imageUrl) || demographics.length === 0}>
+                {running ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Running Flow...</>) : (<>Run Full Flow</>)}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Chat Panel */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Chat your campaign plan</h3>
+              <Badge variant="secondary">Configurable</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Describe demographics as a list. Format examples:
+              <br />
+              1. Japan (Tokyo) &lt;Gen Z tech-forward, neon&gt;
+              <br />
+              2. India (Bengaluru) &lt;college students, festival vibe&gt;
+            </p>
+            <textarea
+              className="w-full min-h-36 text-sm rounded border bg-muted/30 p-2"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const parsed = parseCampaignPlan(chatInput);
+                  setDemographics(parsed);
+                  appendLog(`Planned ${parsed.length} demographics.`);
+                }}
+                disabled={running}
+              >
+                Plan Campaigns
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  const parsed = parseCampaignPlan(chatInput);
+                  setDemographics(parsed);
+                  runFlow();
+                }}
+                disabled={running || (!file && !imageUrl)}
+              >
+                Plan + Run
+              </Button>
+            </div>
+            {demographics.length > 0 && (
+              <div className="text-xs">
+                <p className="font-medium">Planned demographics:</p>
+                <ul className="list-disc pl-5 space-y-1 mt-1">
+                  {demographics.map((d) => (
+                    <li key={d.key}>
+                      <span className="font-medium">{d.title}</span>
+                      {d.city || d.country ? (
+                        <span className="text-muted-foreground"> {`(`}{[d.city, d.country].filter(Boolean).join(', ')}{`)`}</span>
+                      ) : null}
+                      {d.description ? (
+                        <span className="block text-muted-foreground">{d.description}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Progress / Logs */}
       <Card>
@@ -209,7 +280,7 @@ export function ModernAll() {
 
       {/* Results */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {audiences.map((a) => {
+        {demographics.map((a) => {
           const img = results.images[a.key];
           const vid = results.videos[a.key];
           const prompt = audiencePrompts[a.key] || '';
@@ -295,15 +366,54 @@ function summarizeInsights(ins: any): string {
   }
 }
 
-function buildAudiencePrompt(baseSummary: string, culture: any, audience: AudiencePlan): string {
+function buildAudiencePrompt(baseSummary: string, culture: any, audience: DemographicPlan): string {
   const cultureHints = culture ? JSON.stringify({ aesthetics: culture?.aesthetics, communication: culture?.communication, themes: culture?.themes }) : "";
   return [
     `Base image analysis: ${baseSummary}`,
-    `Target audience: ${audience.title}`,
-    `Audience description: ${audience.description}`,
+    `Target demographic: ${audience.title}${audience.city || audience.country ? ` (${[audience.city, audience.country].filter(Boolean).join(', ')})` : ''}`,
+    audience.description && `Demographic details: ${audience.description}`,
     cultureHints && `Relevant cultural cues: ${cultureHints}`,
-    `Goal: produce a high-quality visual that resonates with this audience while staying tasteful and brand-safe.`
+    `Goal: produce a high-quality visual that resonates with this demographic while staying tasteful and brand-safe.`
   ].filter(Boolean).join("\n");
+}
+
+// Parse user chat into a list of demographics
+function parseCampaignPlan(input: string): DemographicPlan[] {
+  const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const items: DemographicPlan[] = [];
+  for (const raw of lines) {
+    // Expect patterns like: "1. Japan (Tokyo) <details here>" or "Japan <details>"
+    const line = raw.replace(/^\d+\.?\s*/, "");
+    // Extract details in angle brackets
+    const detailsMatch = line.match(/<([^>]*)>/);
+    const description = detailsMatch ? detailsMatch[1].trim() : "";
+    const withoutDetails = line.replace(/<[^>]*>/g, "").trim();
+    // Extract location in parentheses
+    const locMatch = withoutDetails.match(/^(.*?)\s*\(([^)]*)\)/);
+    let title = withoutDetails;
+    let city: string | undefined;
+    let country: string | undefined;
+    if (locMatch) {
+      title = (locMatch[1] || "").trim() || "Unknown";
+      const parts = (locMatch[2] || "").split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length === 1) {
+        // Could be city or country; we will treat it as city and use title as country
+        city = parts[0];
+        country = title;
+      } else if (parts.length >= 2) {
+        city = parts[0];
+        country = parts[1];
+      }
+    } else {
+      // No parentheses: treat entire token before first space or dash as country/title
+      const basic = withoutDetails.replace(/[-–].*$/, '').trim();
+      title = basic || "Unknown";
+      country = title;
+    }
+    const key = `${items.length + 1}-${title.toLowerCase().replace(/\s+/g, '-')}`;
+    items.push({ key, title, description, city, country });
+  }
+  return items;
 }
 
 async function generateOrEditImage(prompt: string, uploaded?: File | null): Promise<string | null> {

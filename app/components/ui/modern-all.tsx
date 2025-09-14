@@ -359,6 +359,40 @@ export function ModernAll() {
                 size="sm"
                 onClick={async () => {
                   try {
+                    const resp = await fetch('/api/demographics/normalize', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ input: chatInput })
+                    });
+                    if (!resp.ok) throw new Error(await resp.text());
+                    const data = await resp.json();
+                    const formatted: string = data?.textFormatted || '';
+                    const list: any[] = Array.isArray(data?.demographics) ? data.demographics : [];
+                    if (formatted) setChatInput(formatted);
+                    if (list.length > 0) {
+                      const parsed = list.map((d: any, idx: number) => ({
+                        key: `${idx + 1}-${String(d.title || d.country || 'untitled').toLowerCase().replace(/\s+/g, '-')}`,
+                        title: String(d.title || d.country || 'Untitled'),
+                        description: String(d.description || ''),
+                        city: d.city || undefined,
+                        country: d.country || undefined,
+                      }));
+                      setDemographics(parsed);
+                      appendLog(`Normalized and planned ${parsed.length} demographics using AI.`);
+                    }
+                  } catch (e: any) {
+                    appendLog(`Normalize failed: ${e?.message || e}`);
+                  }
+                }}
+                disabled={running}
+              >
+                Normalize (AI)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
                     const resp = await fetch('/api/demographics/expand', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },

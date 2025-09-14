@@ -16,7 +16,8 @@ import {
   Sun,
   Moon,
   Globe,
-  Wand2
+  Wand2,
+  Map
 } from 'lucide-react';
 import { StudioMode } from '@/lib/types';
 
@@ -35,6 +36,11 @@ const navigationItems = [
     id: 'all' as StudioMode,
     label: 'All',
     icon: Wand2,
+  },
+  {
+    id: 'maps' as StudioMode,
+    label: 'Maps',
+    icon: Map,
   },
   {
     id: 'create-image' as StudioMode,

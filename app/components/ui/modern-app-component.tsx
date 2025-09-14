@@ -508,6 +508,10 @@ export default function ModernAlchemyStudio() {
             <ModernGallery items={galleryItems} onDelete={handleDelete} />
           ) : state.mode === 'cultural' ? (
             <ModernCultural />
+          ) : state.mode === 'maps' ? (
+            <div className="min-h-[70vh]">
+              <iframe src="/maps" className="w-full h-[70vh]" style={{ border: 0 }} />
+            </div>
           ) : state.mode === 'all' ? (
             <ModernAll />
           ) : (

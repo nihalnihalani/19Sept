@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +40,7 @@ export function ModernAll() {
   }>({ images: {}, videos: {} });
   const [audiencePrompts, setAudiencePrompts] = useState<Record<string, string>>({});
   const [videoBusy, setVideoBusy] = useState<Record<string, boolean>>({});
+  const [imageBusy, setImageBusy] = useState<Record<string, boolean>>({});
 
   // Chat-driven campaign planning
   const [chatInput, setChatInput] = useState<string>(
@@ -50,7 +51,41 @@ export function ModernAll() {
   );
   const [demographics, setDemographics] = useState<DemographicPlan[]>([]);
 
-  const appendLog = useCallback((line: string) => setLog((l) => [...l, line]), []);
+  // Live progress via SSE
+  const sessionRef = useRef<string>(`sess_${Math.random().toString(36).slice(2)}`);
+  useEffect(() => {
+    try {
+      const es = new EventSource(`/api/progress?session=${encodeURIComponent(sessionRef.current)}`);
+      es.onmessage = (ev) => {
+        if (!ev?.data) return;
+        try {
+          const parsed = JSON.parse(ev.data);
+          if (parsed?.text) setLog((l) => [...l, parsed.text]);
+        } catch {
+          setLog((l) => [...l, String(ev.data)]);
+        }
+      };
+      es.onerror = () => {
+        // silently ignore; client still appends locally
+      };
+      return () => es.close();
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const appendLog = useCallback(async (line: string) => {
+    setLog((l) => [...l, line]);
+    try {
+      await fetch('/api/progress/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session: sessionRef.current, message: line })
+      });
+    } catch {
+      // ignore push errors
+    }
+  }, []);
 
   const handleFile = (f: File) => {
     setFile(f);
@@ -233,6 +268,51 @@ export function ModernAll() {
               >
                 Plan Campaigns
               </Button>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground">Count</label>
+                <select
+                  className="text-sm border rounded px-2 py-1 bg-background"
+                  defaultValue="3"
+                  onChange={(e) => {
+                    const n = Math.max(1, Math.min(6, parseInt(e.target.value || '3', 10)));
+                    const templates = [
+                      "1. Japan (Tokyo) <tech-forward Gen Z, neon>",
+                      "2. India (Bengaluru) <college students, festival vibe>",
+                      "3. Norway (Oslo) <eco-conscious millennials, minimal>",
+                      "4. Brazil (São Paulo) <urban youth, vibrant colors>",
+                      "5. USA (NYC) <young professionals, sleek modern>",
+                      "6. UAE (Dubai) <luxury-focused, premium aesthetics>"
+                    ];
+                    const block = templates.slice(0, n).join('\n');
+                    setChatInput(`Generate ad campaign variants for:\n${block}`);
+                  }}
+                >
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                </select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const n = 3; // default quick-fill
+                    const templates = [
+                      "1. Japan (Tokyo) <tech-forward Gen Z, neon>",
+                      "2. India (Bengaluru) <college students, festival vibe>",
+                      "3. Norway (Oslo) <eco-conscious millennials, minimal>",
+                      "4. Brazil (São Paulo) <urban youth, vibrant colors>",
+                      "5. USA (NYC) <young professionals, sleek modern>",
+                      "6. UAE (Dubai) <luxury-focused, premium aesthetics>"
+                    ];
+                    const block = templates.slice(0, n).join('\n');
+                    setChatInput(`Generate ad campaign variants for:\n${block}`);
+                  }}
+                >
+                  Auto-fill
+                </Button>
+              </div>
               <Button
                 size="sm"
                 onClick={() => {
@@ -299,7 +379,7 @@ export function ModernAll() {
                 ) : (
                   <div className="text-xs text-muted-foreground">Image pending...</div>
                 )}
-                {/* Video Row: show prompt with Generate Video button and the resulting video */}
+                {/* Action Row: per-demographic image retry + video */}
                 <div className="mt-2 space-y-2">
                   <div>
                     <p className="text-xs font-medium">Video Prompt (inspired by Qloo + image understanding)</p>
@@ -312,11 +392,31 @@ export function ModernAll() {
                       variant="outline"
                       size="sm"
                       onClick={async () => {
+                        if (!prompt || imageBusy[a.key]) return;
+                        setImageBusy((ib) => ({ ...ib, [a.key]: true }));
+                        try {
+                          setStep('gen_images');
+                          await appendLog(`Regenerating image for ${a.title}...`);
+                          const url = await generateOrEditImage(prompt, file);
+                          setResults((r) => ({ ...r, images: { ...r.images, [a.key]: url ? { url } : null } }));
+                          if (url) try { studio.setImage({ url }); } catch {}
+                        } finally {
+                          setImageBusy((ib) => ({ ...ib, [a.key]: false }));
+                        }
+                      }}
+                      disabled={running || !prompt || !!imageBusy[a.key]}
+                    >
+                      {imageBusy[a.key] ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Generating...</> : 'Generate Image'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
                         if (!prompt || videoBusy[a.key]) return;
                         setVideoBusy((vb) => ({ ...vb, [a.key]: true }));
                         try {
                           setStep('gen_videos');
-                          appendLog(`Generating video for ${a.title}...`);
+                          await appendLog(`Generating video for ${a.title}...`);
                           const videoUrl = await generateVideoFromPrompt(prompt, { onLog: (m) => appendLog(m) });
                           setResults((r) => ({ ...r, videos: { ...r.videos, [a.key]: videoUrl ? { url: videoUrl } : null } }));
                           if (videoUrl) try { studio.setVideo({ url: videoUrl }); } catch {}

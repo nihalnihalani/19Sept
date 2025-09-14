@@ -81,7 +81,33 @@ tools = [
                     "required": ["demographic", "prompt"],
                 },
             ),
-            # Other functions intentionally left unchanged for minimal edits
+            types.FunctionDeclaration(
+                name="plan_demographics_from_speech",
+                description="Parse a spoken plan into demographics and (optionally) expand via AI.",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "transcript": {"type": "string", "description": "Raw speech transcript"},
+                        "maxItems": {"type": "integer", "description": "Max demographics", "minimum": 1, "maximum": 6, "default": 4},
+                        "autoExpand": {"type": "boolean", "description": "Use AI to enrich the demographics", "default": True},
+                    },
+                    "required": ["transcript"],
+                },
+            ),
+            types.FunctionDeclaration(
+                name="start_all_flow",
+                description="Start the full All pipeline with N demographics parsed from a spoken plan.",
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "transcript": {"type": "string", "description": "Raw speech transcript or seed"},
+                        "demographics": {"type": "array", "items": {"type": "object"}, "description": "Optional explicit demographics to run"},
+                        "maxItems": {"type": "integer", "minimum": 1, "maximum": 6, "default": 3},
+                        "imageUrl": {"type": "string", "description": "Optional image URL to analyze"},
+                    },
+                    "required": [],
+                },
+            ),
         ]
     ),
 ]
@@ -141,6 +167,33 @@ async def handle_tool_call(name: str, args: Dict[str, Any], session_id: str) -> 
                 }
             ],
         }
+        result = await post_json("/api/voice/run", payload)
+        return {"ok": True, "called": name, "result": result}
+
+    if name == "plan_demographics_from_speech":
+        transcript = str(args.get("transcript") or "").strip()
+        max_items = int(args.get("maxItems") or 4)
+        auto_expand = bool(args.get("autoExpand") if args.get("autoExpand") is not None else True)
+        demographics = []
+        if auto_expand and transcript:
+            data = await post_json("/api/demographics/expand", {"input": transcript})
+            if isinstance(data, dict) and isinstance(data.get("demographics"), list):
+                demographics = data["demographics"][: max(1, min(6, max_items))]
+        return {"ok": True, "called": name, "demographics": demographics}
+
+    if name == "start_all_flow":
+        # If demographics are provided, use them; else derive from transcript via expand API
+        demographics = args.get("demographics") or []
+        transcript = str(args.get("transcript") or "").strip()
+        max_items = int(args.get("maxItems") or 3)
+        image_url = args.get("imageUrl")
+        if not demographics and transcript:
+            data = await post_json("/api/demographics/expand", {"input": transcript})
+            if isinstance(data, dict) and isinstance(data.get("demographics"), list):
+                demographics = data["demographics"][: max(1, min(6, max_items))]
+        payload = {"session": session_id, "demographics": demographics}
+        if image_url:
+            payload["imageUrl"] = image_url
         result = await post_json("/api/voice/run", payload)
         return {"ok": True, "called": name, "result": result}
 

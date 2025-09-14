@@ -50,10 +50,29 @@ export function ModernAll() {
 3. Norway (Oslo) <eco-conscious millennials, minimal, nature aesthetics>`
   );
   const [demographics, setDemographics] = useState<DemographicPlan[]>([]);
+  // Voice capture
+  const [micSupported, setMicSupported] = useState<boolean>(false);
+  const [micActive, setMicActive] = useState<boolean>(false);
+  const [voiceTranscript, setVoiceTranscript] = useState<string>("");
 
   // Live progress via SSE
   const sessionRef = useRef<string>(`sess_${Math.random().toString(36).slice(2)}`);
   const sseReadyRef = useRef<boolean>(false);
+  const appendLog = useCallback(async (line: string) => {
+    if (!sseReadyRef.current) {
+      // Before SSE connection established, append locally for immediate feedback
+      setLog((l) => [...l, line]);
+    }
+    try {
+      await fetch('/api/progress/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session: sessionRef.current, message: line })
+      });
+    } catch {
+      // ignore push errors
+    }
+  }, []);
   useEffect(() => {
     try {
       const es = new EventSource(`/api/progress?session=${encodeURIComponent(sessionRef.current)}`);
@@ -81,21 +100,62 @@ export function ModernAll() {
     }
   }, []);
 
-  const appendLog = useCallback(async (line: string) => {
-    if (!sseReadyRef.current) {
-      // Before SSE connection established, append locally for immediate feedback
-      setLog((l) => [...l, line]);
-    }
-    try {
-      await fetch('/api/progress/push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session: sessionRef.current, message: line })
-      });
-    } catch {
-      // ignore push errors
-    }
+  // Detect Web Speech API
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setMicSupported(!!SR);
   }, []);
+
+  // Start/Stop microphone capture
+  const startMic = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = 'en-US';
+    rec.continuous = true;
+    rec.interimResults = true;
+    const chunks: string[] = [];
+    rec.onresult = (e: any) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const str = e.results[i][0].transcript;
+        if (e.results[i].isFinal) chunks.push(str);
+        else interim += str;
+      }
+      setVoiceTranscript([...chunks, interim].join(' ').trim());
+    };
+    rec.onerror = () => { /* no-op */ };
+    rec.onend = () => {
+      setMicActive(false);
+      const full = chunks.join(' ').trim();
+      if (full) {
+        // Put into chat and auto plan
+        setChatInput((prev) => {
+          const header = prev.startsWith('Generate ad campaign variants for:') ? '' : 'Generate ad campaign variants for:\n';
+          return `${header}${full}`.trim();
+        });
+        const parsed = parseCampaignPlan(full);
+        if (parsed.length > 0) {
+          setDemographics(parsed);
+          appendLog(`Planned ${parsed.length} demographics from voice.`);
+        }
+      }
+    };
+    try {
+      rec.start();
+      (window as any).__rec = rec;
+      setMicActive(true);
+      setVoiceTranscript('');
+    } catch {}
+  }, [appendLog]);
+
+  const stopMic = useCallback(() => {
+    try { ((window as any).__rec as any)?.stop?.(); } catch {}
+  }, []);
+
+  
 
   const handleFile = (f: File) => {
     setFile(f);
@@ -250,7 +310,19 @@ export function ModernAll() {
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Chat your campaign plan</h3>
-              <Badge variant="secondary">Configurable</Badge>
+              <div className="flex items-center gap-2">
+                {micSupported && (
+                  <Button
+                    variant={micActive ? 'destructive' : 'outline'}
+                    size="sm"
+                    onClick={() => { micActive ? stopMic() : startMic(); }}
+                    title={micActive ? 'Stop voice capture' : 'Start voice capture'}
+                  >
+                    {micActive ? 'Stop Mic' : 'Start Mic'}
+                  </Button>
+                )}
+                <Badge variant="secondary">Configurable</Badge>
+              </div>
             </div>
             <p className="text-xs text-muted-foreground">
               Describe demographics as a list. Format examples:
@@ -259,6 +331,11 @@ export function ModernAll() {
               <br />
               2. India (Bengaluru) &lt;college students, festival vibe&gt;
             </p>
+            {micActive && (
+              <div className="text-xs text-muted-foreground">
+                Listening... {voiceTranscript}
+              </div>
+            )}
             <textarea
               className="w-full min-h-36 text-sm rounded border bg-muted/30 p-2"
               value={chatInput}

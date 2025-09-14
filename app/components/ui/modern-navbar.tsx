@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -108,6 +109,10 @@ export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
 
         {/* Right side actions */}
         <div className="flex items-center gap-2">
+          {/* Maps link */}
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/maps">Maps</Link>
+          </Button>
           
           {/* Theme toggle */}
           <Button

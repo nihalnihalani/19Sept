@@ -62,6 +62,7 @@ export type StudioSharedState = {
  * Studio modes for different AI generation types
  */
 export type StudioMode =
+  | "all"
   | "cultural"
   | "create-image"
   | "edit-image"

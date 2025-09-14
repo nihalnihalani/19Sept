@@ -7,7 +7,9 @@ import { ModernNavbar } from '@/components/ui/modern-navbar';
 import { ModernStudioInterface } from '@/components/ui/modern-studio-interface';
 import { ModernGallery } from '@/components/ui/modern-gallery';
 import { ModernCultural } from '@/components/ui/modern-cultural';
+import { ModernAll } from '@/components/ui/modern-all';
 import { MOCK_VIDEOS } from '@/lib/config';
+import { useStudio } from '@/lib/useStudio';
 
 // Simplified state management
 interface AppState {
@@ -43,9 +45,10 @@ type GalleryItem = {
 };
 
 export default function ModernAlchemyStudio() {
+  const studio = useStudio();
   const [state, setState] = useState<AppState>({
     mode: 'create-image',
-    prompt: '',
+    prompt: typeof window !== 'undefined' ? (studio.state.prompt || '') : '',
     isGenerating: false,
     generatedContent: null
   });
@@ -60,6 +63,8 @@ export default function ModernAlchemyStudio() {
   const pathToMode = (path: string): StudioMode => {
     const seg = path.replace(/\/+$/, '').split('/').filter(Boolean)[0] || '';
     switch (seg) {
+      case 'all':
+        return 'all';
       case 'cultural':
         return 'cultural';
       case 'create':
@@ -77,6 +82,8 @@ export default function ModernAlchemyStudio() {
 
   const modeToPath = (mode: StudioMode): string => {
     switch (mode) {
+      case 'all':
+        return '/all';
       case 'cultural':
         return '/cultural';
       case 'create-image':
@@ -137,6 +144,8 @@ export default function ModernAlchemyStudio() {
   // Handle prompt changes
   const handlePromptChange = (prompt: string) => {
     setState(prev => ({ ...prev, prompt }));
+    // sync shared prompt so other modes can pick it up
+    try { studio.setPrompt(prompt); } catch {}
   };
 
   // Handle generation
@@ -304,6 +313,9 @@ export default function ModernAlchemyStudio() {
           },
           isGenerating: false
         }));
+        // update shared studio image (prefer durable URL if provided)
+        const useUrl = typeof json?.image?.url === 'string' && json.image.url ? json.image.url : dataUrl;
+        try { studio.setImage({ url: useUrl, mimeType: json?.image?.mimeType, id: json?.media?.id, imageBytes: json?.image?.imageBytes }); } catch {}
         // If the API also saved the image and inserted into Neo4j, refresh gallery
         // Prefer the saved URL for the gallery view
         if (json?.image?.url) {
@@ -349,6 +361,8 @@ export default function ModernAlchemyStudio() {
           generatedContent: { type: 'image', url: dataUrl },
           isGenerating: false,
         }));
+        const useUrl = typeof json?.image?.url === 'string' && json.image.url ? json.image.url : dataUrl;
+        try { studio.setImage({ url: useUrl, mimeType: json?.image?.mimeType, id: json?.media?.id, imageBytes: json?.image?.imageBytes }); } catch {}
         if (json?.image?.url) {
           await loadGallery();
         }
@@ -425,6 +439,8 @@ export default function ModernAlchemyStudio() {
                     isGenerating: false
                   }));
                   setVideoUrl(url);
+                  // publish video to shared state
+                  try { studio.setVideo({ url, mimeType: saved?.mimeType }); } catch {}
                   await loadGallery();
                 } else {
                   // Fallback to streaming if JSON not as expected
@@ -492,6 +508,8 @@ export default function ModernAlchemyStudio() {
             <ModernGallery items={galleryItems} onDelete={handleDelete} />
           ) : state.mode === 'cultural' ? (
             <ModernCultural />
+          ) : state.mode === 'all' ? (
+            <ModernAll />
           ) : (
             <ModernStudioInterface
               mode={state.mode}

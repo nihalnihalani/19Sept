@@ -130,8 +130,36 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
   }, [imageUrl]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700">
+    <>
+      {/* Floating notification for detected category */}
+      {detectedCategory && (
+        <motion.div
+          initial={{ opacity: 0, y: 50, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 50, scale: 0.9 }}
+          className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50 max-w-md mx-4"
+        >
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 rounded-xl shadow-2xl border border-green-400">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl animate-bounce">
+                {CATEGORY_EMOJIS[detectedCategory] || "📦"}
+              </div>
+              <div>
+                <div className="font-bold text-lg">
+                  {CATEGORY_LABELS[detectedCategory] || "Unknown Category"}
+                </div>
+                <div className="text-sm opacity-90">
+                  Category detected successfully!
+                </div>
+              </div>
+              <Sparkles className="w-5 h-5 animate-pulse ml-auto" />
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="w-full max-w-2xl mx-auto relative z-10">
+        <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700">
         <div className="text-center mb-6">
           <h3 className="text-xl font-bold text-gray-100 mb-2">
             Product Category Detection
@@ -230,7 +258,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -20 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/40 rounded-xl shadow-lg"
+                  className="p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/40 rounded-xl shadow-lg relative z-20"
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-4xl animate-bounce">
@@ -271,8 +299,9 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
           className="hidden"
           onChange={handleImageUpload}
         />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

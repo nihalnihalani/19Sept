@@ -661,7 +661,7 @@ const VeoStudio: React.FC = () => {
     return (
       <AnimatedLayout>
         <div className="relative min-h-screen w-full">
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] pb-40 px-4">
+          <div className="flex flex-col items-center justify-start min-h-[calc(100vh-80px)] pt-8 pb-60 px-4">
             <ProductCategoryDetector 
               onCategoryDetected={(category) => {
                 console.log('Detected category:', category);

@@ -136,7 +136,7 @@ const Composer: React.FC<ComposerProps> = ({
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 w-[min(100%,56rem)] px-4">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 w-[min(100%,56rem)] px-4">
       <div className="relative text-slate-900/80 backdrop-blur-xl bg-gray-800/60 px-6 py-4 rounded-2xl shadow-lg border border-gray-700">
         {hasGeneratedImage && !hasVideoUrl && (
           <div className="absolute -top-14 right-0 z-10">

@@ -27,6 +27,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@brightdata/mcp": "^2.5.0",
     "@google/genai": "^1.8.0",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@wojtekmaj/react-hooks": "^2.0.0",

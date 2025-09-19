@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { detectProductCategory, generateSearchQuery, createApifyInput, PRODUCT_CATEGORIES } from "@/lib/product-mapping";
 import { ApifyService, MockApifyService } from "@/lib/apify-service";
+import { FactFluxService } from "@/lib/factflux-service";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is not set.");
@@ -11,6 +12,36 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Use real Apify service with your API key
 const apifyService = new ApifyService();
+
+// Helper function to generate social media URLs for competitors
+function generateSocialMediaUrls(competitor: any, category: any): string[] {
+  const baseUrls = [];
+  const competitorName = competitor.name.toLowerCase().replace(/\s+/g, '');
+  
+  // Generate common social media URL patterns
+  const socialPlatforms = [
+    `https://www.instagram.com/${competitorName}`,
+    `https://www.twitter.com/${competitorName}`,
+    `https://www.tiktok.com/@${competitorName}`,
+    `https://www.facebook.com/${competitorName}`,
+    `https://www.youtube.com/@${competitorName}`,
+    `https://www.linkedin.com/company/${competitorName}`
+  ];
+  
+  // Add category-specific search URLs
+  const searchTerms = [
+    `${competitor.name} ${category.name}`,
+    `${competitor.name} ${category.name} ads`,
+    `${competitor.name} ${category.name} marketing`
+  ];
+  
+  searchTerms.forEach(term => {
+    socialPlatforms.push(`https://www.instagram.com/explore/tags/${term.replace(/\s+/g, '')}`);
+    socialPlatforms.push(`https://www.tiktok.com/search?q=${encodeURIComponent(term)}`);
+  });
+  
+  return socialPlatforms;
+}
 
 export async function POST(req: Request) {
   console.log("🚀 Starting competitive analysis request...");
@@ -150,6 +181,37 @@ export async function POST(req: Request) {
       }
     });
 
+    // Enhanced competitive analysis with FactFlux
+    console.log("🔍 Starting FactFlux social media analysis...");
+    let factFluxAnalysis = null;
+    
+    try {
+      const factFluxService = new FactFluxService();
+      
+      // Generate competitor social media URLs based on detected category
+      const competitorUrls = productAnalysis.suggestedCompetitors.map(competitor => ({
+        name: competitor.name,
+        urls: this.generateSocialMediaUrls(competitor, productAnalysis.detectedCategory)
+      }));
+
+      // Flatten URLs for FactFlux analysis
+      const allUrls = competitorUrls.flatMap(comp => comp.urls);
+      
+      if (allUrls.length > 0) {
+        factFluxAnalysis = await factFluxService.runCompetitiveAnalysis(
+          allUrls,
+          productAnalysis.detectedCategory.name
+        );
+        console.log("✅ FactFlux analysis completed:", {
+          posts: factFluxAnalysis.posts.length,
+          insights: factFluxAnalysis.insights.length,
+          confidence: factFluxAnalysis.confidence
+        });
+      }
+    } catch (factFluxError) {
+      console.warn("⚠️ FactFlux analysis failed, continuing with standard analysis:", factFluxError);
+    }
+
     // Generate competitive product image using scraped references
     console.log("🎨 Starting competitive image generation...");
     
@@ -223,6 +285,15 @@ export async function POST(req: Request) {
             }, 0) / allScrapedAds.filter(ad => ad.price).length || 0,
           topBrands: [...new Set(allScrapedAds.map(ad => ad.brand))],
         },
+        // Enhanced insights with FactFlux social media analysis
+        socialMediaAnalysis: factFluxAnalysis ? {
+          posts: factFluxAnalysis.posts,
+          insights: factFluxAnalysis.insights,
+          summary: factFluxAnalysis.summary,
+          confidence: factFluxAnalysis.confidence,
+          trendingTopics: factFluxAnalysis.summary.trendingTopics,
+          competitorMentions: factFluxAnalysis.summary.competitorMentions
+        } : null,
         detectionDetails: {
           initialDetection: productAnalysis.confidence > 0.5,
           fallbackUsed: productAnalysis.confidence <= 0.5,

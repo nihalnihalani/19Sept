@@ -64,6 +64,42 @@ interface CompetitiveAnalysisResult {
     averagePrice: number;
     topBrands: string[];
   };
+  socialMediaAnalysis?: {
+    posts: Array<{
+      platform: string;
+      url: string;
+      content: string;
+      author: string;
+      timestamp: string;
+      engagement: {
+        likes: number;
+        shares: number;
+        comments: number;
+      };
+      hashtags: string[];
+      mentions: string[];
+    }>;
+    insights: Array<{
+      claim: string;
+      source: string;
+      credibility: number;
+      relevance: number;
+      sentiment: 'positive' | 'negative' | 'neutral';
+      category: string;
+      evidence: string[];
+      timestamp: string;
+    }>;
+    summary: {
+      totalPosts: number;
+      topPlatforms: string[];
+      averageEngagement: number;
+      trendingTopics: string[];
+      competitorMentions: string[];
+    };
+    confidence: number;
+    trendingTopics: string[];
+    competitorMentions: string[];
+  };
 }
 
 interface GeneratedContent {
@@ -809,6 +845,94 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
                             </div>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* FactFlux Social Media Analysis */}
+                    {competitiveAnalysis.socialMediaAnalysis && (
+                      <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-6">
+                        <h4 className="text-lg font-semibold text-[#f5f5f5] mb-4 flex items-center gap-2">
+                          <Sparkles className="w-5 h-5" />
+                          Social Media Intelligence ({competitiveAnalysis.socialMediaAnalysis.posts.length} posts analyzed)
+                        </h4>
+                        
+                        {/* Social Media Summary */}
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-[#7e3ff2]">
+                              {competitiveAnalysis.socialMediaAnalysis.summary.totalPosts}
+                            </div>
+                            <div className="text-sm text-[#a5a5a5]">Social Posts</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-400">
+                              {competitiveAnalysis.socialMediaAnalysis.summary.averageEngagement}
+                            </div>
+                            <div className="text-sm text-[#a5a5a5]">Avg Engagement</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-400">
+                              {competitiveAnalysis.socialMediaAnalysis.summary.topPlatforms.length}
+                            </div>
+                            <div className="text-sm text-[#a5a5a5]">Active Platforms</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-yellow-400">
+                              {competitiveAnalysis.socialMediaAnalysis.confidence}%
+                            </div>
+                            <div className="text-sm text-[#a5a5a5]">Confidence</div>
+                          </div>
+                        </div>
+
+                        {/* Trending Topics */}
+                        {competitiveAnalysis.socialMediaAnalysis.trendingTopics.length > 0 && (
+                          <div className="mb-6">
+                            <h5 className="text-md font-semibold text-[#f5f5f5] mb-3">Trending Topics</h5>
+                            <div className="flex flex-wrap gap-2">
+                              {competitiveAnalysis.socialMediaAnalysis.trendingTopics.slice(0, 8).map((topic, index) => (
+                                <span key={index} className="text-xs bg-[#7e3ff2]/20 text-[#7e3ff2] px-3 py-1 rounded-full">
+                                  {topic}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Competitive Insights */}
+                        {competitiveAnalysis.socialMediaAnalysis.insights.length > 0 && (
+                          <div>
+                            <h5 className="text-md font-semibold text-[#f5f5f5] mb-3">Key Competitive Insights</h5>
+                            <div className="space-y-3 max-h-48 overflow-y-auto">
+                              {competitiveAnalysis.socialMediaAnalysis.insights.slice(0, 5).map((insight, index) => (
+                                <div key={index} className="bg-[#2a2a2a]/50 rounded-lg p-3">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <p className="text-sm text-[#f5f5f5] font-medium">{insight.claim}</p>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-xs px-2 py-1 rounded ${
+                                        insight.sentiment === 'positive' ? 'bg-green-600/20 text-green-300' :
+                                        insight.sentiment === 'negative' ? 'bg-red-600/20 text-red-300' :
+                                        'bg-gray-600/20 text-gray-300'
+                                      }`}>
+                                        {insight.sentiment}
+                                      </span>
+                                      <span className="text-xs text-[#a5a5a5]">
+                                        {insight.credibility}% credible
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs bg-blue-600/20 text-blue-300 px-2 py-1 rounded">
+                                      {insight.category}
+                                    </span>
+                                    <span className="text-xs text-[#a5a5a5]">
+                                      {insight.platform}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </motion.div>

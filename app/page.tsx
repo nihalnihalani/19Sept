@@ -34,6 +34,7 @@ const AlchemyStudio: React.FC = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [multipleImageFiles, setMultipleImageFiles] = useState<File[]>([]);
   const [geminiBusy, setGeminiBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -161,6 +162,8 @@ const AlchemyStudio: React.FC = () => {
                 setUploadedImage={setUploadedImage}
                 uploadedImageUrl={uploadedImageUrl}
                 setUploadedImageUrl={setUploadedImageUrl}
+                multipleImageFiles={multipleImageFiles}
+                setMultipleImageFiles={setMultipleImageFiles}
           geminiBusy={geminiBusy}
                 setGeminiBusy={setGeminiBusy}
                 error={error}

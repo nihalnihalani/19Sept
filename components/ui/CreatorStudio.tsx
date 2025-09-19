@@ -56,6 +56,8 @@ interface CreatorStudioProps {
   setUploadedImage: (file: File | null) => void;
   uploadedImageUrl: string | null;
   setUploadedImageUrl: (url: string | null) => void;
+  multipleImageFiles: File[];
+  setMultipleImageFiles: (files: File[]) => void;
   geminiBusy: boolean;
   setGeminiBusy: (busy: boolean) => void;
   error: string | null;
@@ -86,6 +88,8 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
   setUploadedImage,
   uploadedImageUrl,
   setUploadedImageUrl,
+  multipleImageFiles,
+  setMultipleImageFiles,
   geminiBusy,
   setGeminiBusy,
   error,
@@ -143,12 +147,17 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
     const currentPrompt = getCurrentPrompt();
     if (!currentPrompt.trim()) return false;
     
-    if (activeMode === "edit-image" || activeMode === "compose-image") {
+    if (activeMode === "edit-image") {
       return uploadedImage !== null;
+    } else if (activeMode === "compose-image") {
+      // Allow composition with existing image + new images, or just new images
+      const hasExistingImage = uploadedImage || generatedImageUrl;
+      const hasNewImages = multipleImageFiles.length > 0;
+      return hasExistingImage || hasNewImages;
     }
     
     return true;
-  }, [activeMode, getCurrentPrompt, uploadedImage]);
+  }, [activeMode, getCurrentPrompt, uploadedImage, generatedImageUrl, multipleImageFiles]);
 
   const startGeneration = useCallback(async () => {
     if (!canStart() || isGenerating) return;
@@ -178,12 +187,52 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
 
         const result = await response.json();
         setVideoUrl(result.videoUrl);
+      } else if (activeMode === "compose-image") {
+        // Compose mode - handle multiple images
+        const formData = new FormData();
+        formData.append('prompt', currentPrompt);
+
+        // Add newly uploaded images first
+        for (const file of multipleImageFiles) {
+          formData.append('imageFiles', file);
+        }
+
+        // Include existing image last (if any)
+        if (uploadedImage) {
+          formData.append('imageFiles', uploadedImage);
+        } else if (generatedImageUrl) {
+          // Convert data URL to blob and add as file
+          const response = await fetch(generatedImageUrl);
+          const blob = await response.blob();
+          const existingImageFile = new File([blob], "existing-image.png", {
+            type: blob.type,
+          });
+          formData.append('imageFiles', existingImageFile);
+        }
+
+        const response = await fetch('/api/gemini/edit', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Image composition failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result?.image?.imageBytes) {
+          const dataUrl = `data:${result.image.mimeType};base64,${result.image.imageBytes}`;
+          setGeneratedImageUrl(dataUrl);
+        } else if (result?.error) {
+          throw new Error(result.error);
+        }
       } else {
+        // Regular image generation (create-image, edit-image)
         const formData = new FormData();
         formData.append('prompt', currentPrompt);
         formData.append('model', selectedModel);
         
-        if (uploadedImage && (activeMode === "edit-image" || activeMode === "compose-image")) {
+        if (uploadedImage && activeMode === "edit-image") {
           formData.append('image', uploadedImage);
         }
 
@@ -216,6 +265,7 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
     setGeneratedImageUrl(null);
     setVideoUrl(null);
     setUploadedImage(null);
+    setMultipleImageFiles([]);
     if (uploadedImageUrl) {
       URL.revokeObjectURL(uploadedImageUrl);
       setUploadedImageUrl(null);
@@ -223,7 +273,7 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
     setIsGenerating(false);
     setGeminiBusy(false);
     setError(null);
-  }, [setPrompt, setImagePrompt, setEditPrompt, setComposePrompt, setGeneratedImageUrl, setVideoUrl, setUploadedImage, uploadedImageUrl, setUploadedImageUrl, setIsGenerating, setGeminiBusy, setError]);
+  }, [setPrompt, setImagePrompt, setEditPrompt, setComposePrompt, setGeneratedImageUrl, setVideoUrl, setUploadedImage, setMultipleImageFiles, uploadedImageUrl, setUploadedImageUrl, setIsGenerating, setGeminiBusy, setError]);
 
   const downloadImage = useCallback(() => {
     if (generatedImageUrl) {
@@ -244,6 +294,18 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
       setError(null);
     }
   }, [setUploadedImage, setUploadedImageUrl, setError]);
+
+  const handleMultipleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+      const limitedFiles = imageFiles.slice(0, 10);
+      setMultipleImageFiles((prevFiles) =>
+        [...prevFiles, ...limitedFiles].slice(0, 10)
+      );
+      setError(null);
+    }
+  }, [setMultipleImageFiles, setError]);
 
   const getModeTitle = () => {
     switch (activeMode) {
@@ -447,8 +509,8 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
 
     return (
       <div className="space-y-6">
-        {/* Upload Area for Edit/Compose */}
-        {(activeMode === "edit-image" || activeMode === "compose-image") && (
+        {/* Upload Area for Edit */}
+        {activeMode === "edit-image" && (
           <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-6">
             <h3 className="text-lg font-semibold text-[#f5f5f5] mb-4">Upload Image</h3>
             <div className="relative">
@@ -480,6 +542,79 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
                   </div>
                 )}
               </label>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Area for Compose */}
+        {activeMode === "compose-image" && (
+          <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-6">
+            <h3 className="text-lg font-semibold text-[#f5f5f5] mb-4">Compose Multiple Images</h3>
+            <div className="space-y-4">
+              {/* Multiple image upload */}
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleMultipleImageUpload}
+                  className="hidden"
+                  id="multiple-image-upload"
+                />
+                <label
+                  htmlFor="multiple-image-upload"
+                  className="block w-full p-8 border-2 border-dashed border-[#2a2a2a] rounded-xl cursor-pointer hover:border-[#7e3ff2]/50 transition-colors"
+                >
+                  <div className="text-center">
+                    <Upload className="w-12 h-12 text-[#a5a5a5] mx-auto mb-4" />
+                    <span className="text-[#a5a5a5] text-lg">Click to upload multiple images</span>
+                    <p className="text-[#a5a5a5] text-sm mt-2">Supports JPEG, PNG, WebP up to 10MB each (max 10 images)</p>
+                    {multipleImageFiles.length > 0 && (
+                      <div className="text-[#7e3ff2] text-sm mt-2">
+                        ✓ {multipleImageFiles.length} image{multipleImageFiles.length > 1 ? "s" : ""} selected
+                        {multipleImageFiles.length >= 10 ? " (max reached)" : ""}
+                      </div>
+                    )}
+                  </div>
+                </label>
+              </div>
+
+              {/* Show thumbnails of uploaded images */}
+              {multipleImageFiles.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-[#f5f5f5] mb-3">Selected Images:</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {multipleImageFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-[#2a2a2a]/50 shadow-sm group"
+                        title={file.name}
+                      >
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          onClick={() => {
+                            setMultipleImageFiles(prev => prev.filter((_, i) => i !== index));
+                          }}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Status indicator */}
+              {(uploadedImage || generatedImageUrl) && (
+                <div className="text-sm text-[#7e3ff2] bg-[#7e3ff2]/10 border border-[#7e3ff2]/20 rounded-lg p-3">
+                  ✓ Existing image will be included in composition
+                </div>
+              )}
             </div>
           </div>
         )}

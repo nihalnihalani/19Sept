@@ -100,6 +100,13 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
   const detectCategory = useCallback(async () => {
     if (!imageFile) return;
 
+    // Double-check file type before sending to API
+    const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!supportedTypes.includes(imageFile.type)) {
+      setError(`Unsupported image format: ${imageFile.type}. Please use JPEG, PNG, or WebP format.`);
+      return;
+    }
+
     setIsDetecting(true);
     setError(null);
 
@@ -118,6 +125,10 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
         
         if (response.status === 500 && errorMessage.includes('GEMINI_API_KEY')) {
           throw new Error('API key not configured. Please set up your Gemini API key.');
+        }
+        
+        if (errorMessage.includes('Unsupported MIME type')) {
+          throw new Error('Image format not supported by AI. Please use JPEG, PNG, or WebP format.');
         }
         
         throw new Error(errorMessage);

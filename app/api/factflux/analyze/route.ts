@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       const analysis = await factFluxService.runCompetitiveAnalysis(competitorUrls, category);
 
       // Get additional trending topics if search terms provided
-      let trendingTopics: string[] = [];
+      const trendingTopics: string[] = [];
       if (searchTerms && searchTerms.length > 0) {
         for (const term of searchTerms) {
           const topics = await brightDataService.getTrendingTopics(term);
@@ -91,20 +91,19 @@ export async function GET(req: Request) {
     );
   }
 
-  try {
-    console.log(`🔍 Getting FactFlux insights for ${category}${competitor ? ` and ${competitor}` : ''}`);
-    
-    const factFluxService = new FactFluxService();
-    const brightDataService = new BrightDataService();
+    try {
+      console.log(`🔍 Getting FactFlux insights for ${category}${competitor ? ` and ${competitor}` : ''}`);
+      
+      const brightDataService = new BrightDataService();
 
     try {
       await brightDataService.initialize();
 
       // Search for competitor mentions if competitor specified
-      let competitorMentions: any[] = [];
+      const competitorMentions: Array<{ success: boolean; [key: string]: unknown }> = [];
       if (competitor) {
         const mentions = await brightDataService.searchCompetitorMentions(competitor);
-        competitorMentions = mentions.filter(m => m.success);
+        competitorMentions.push(...mentions.filter(m => m.success));
       }
 
       // Get trending topics for the category

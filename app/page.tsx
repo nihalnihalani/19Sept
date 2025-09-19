@@ -8,9 +8,7 @@ import {
   User,
   Settings,
   ChevronDown,
-  Sparkles,
-  Menu,
-  X
+  Sparkles
 } from "lucide-react";
 import CampaignWorkflow from "@/components/ui/CampaignWorkflow";
 import CreatorStudio from "@/components/ui/CreatorStudio";
@@ -19,7 +17,7 @@ type AppMode = "campaign" | "creator";
 
 const AlchemyStudio: React.FC = () => {
   const [appMode, setAppMode] = useState<AppMode>("campaign");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   
   // Shared state for Creator Studio

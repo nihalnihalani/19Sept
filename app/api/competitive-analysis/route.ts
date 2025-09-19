@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { detectProductCategory, generateSearchQuery, createApifyInput, PRODUCT_CATEGORIES } from "@/lib/product-mapping";
-import { ApifyService, MockApifyService } from "@/lib/apify-service";
+import { detectProductCategory, generateSearchQuery, PRODUCT_CATEGORIES } from "@/lib/product-mapping";
+import { ApifyService } from "@/lib/apify-service";
 import { FactFluxService } from "@/lib/factflux-service";
 
 if (!process.env.GEMINI_API_KEY) {
@@ -14,8 +14,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const apifyService = new ApifyService();
 
 // Helper function to generate social media URLs for competitors
-function generateSocialMediaUrls(competitor: any, category: any): string[] {
-  const baseUrls = [];
+function generateSocialMediaUrls(competitor: { name: string }, category: { name: string }): string[] {
   const competitorName = competitor.name.toLowerCase().replace(/\s+/g, '');
   
   // Generate common social media URL patterns
@@ -191,7 +190,7 @@ export async function POST(req: Request) {
       // Generate competitor social media URLs based on detected category
       const competitorUrls = productAnalysis.suggestedCompetitors.map(competitor => ({
         name: competitor.name,
-        urls: this.generateSocialMediaUrls(competitor, productAnalysis.detectedCategory)
+        urls: generateSocialMediaUrls(competitor, productAnalysis.detectedCategory)
       }));
 
       // Flatten URLs for FactFlux analysis

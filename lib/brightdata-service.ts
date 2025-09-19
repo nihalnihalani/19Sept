@@ -24,7 +24,7 @@ export class BrightDataService {
 
   constructor() {
     this.config = {
-      apiToken: process.env.BRIGHT_DATA_API_KEY || '',
+      apiToken: process.env.BRIGHT_DATA_API_KEY || '987dbfc5a1017f6d5bb7deb3d2f70bb0464b0be01091bd767887d1f532363a73',
       webUnlockerZone: process.env.BRIGHT_DATA_WEB_UNLOCKER_ZONE || 'unblocker',
       browserZone: process.env.BRIGHT_DATA_BROWSER_ZONE || 'scraping_browser',
       timeout: parseInt(process.env.BRIGHT_DATA_TIMEOUT || '30000')

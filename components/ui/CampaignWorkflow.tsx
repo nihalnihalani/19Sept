@@ -162,31 +162,31 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
         return (
           <div className="space-y-8">
             <div className="text-center">
-              <h3 className="text-3xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent mb-4">
+              <h3 className="text-3xl font-bold bg-gradient-to-r from-[#f5f5f5] to-[#a5a5a5] bg-clip-text text-transparent mb-4">
                 Upload Your Product Image
               </h3>
-              <p className="text-purple-300 text-lg mb-8">Start by uploading a high-quality image of your product</p>
+              <p className="text-[#a5a5a5] text-lg mb-8">Start by uploading a high-quality image of your product</p>
             </div>
 
             {!productImage ? (
               <div
-                className="border-2 border-dashed border-purple-400/50 rounded-2xl p-16 cursor-pointer transition-all duration-300 hover:border-purple-400 hover:bg-purple-500/10 hover:scale-105"
+                className="border-2 border-dashed border-[#2a2a2a] rounded-2xl p-16 cursor-pointer transition-all duration-300 hover:border-[#7e3ff2]/50 hover:bg-[#7e3ff2]/5 hover:scale-105"
                 onClick={() => document.getElementById('product-upload')?.click()}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
               >
-                <div className="flex flex-col items-center gap-8 text-purple-300">
-                  <div className="p-6 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl shadow-lg">
-                    <Upload className="w-16 h-16 text-purple-400" />
+                <div className="flex flex-col items-center gap-8 text-[#a5a5a5]">
+                  <div className="p-6 bg-gradient-to-r from-[#7e3ff2]/20 to-[#5a2db8]/20 rounded-3xl shadow-lg">
+                    <Upload className="w-16 h-16 text-[#7e3ff2]" />
                   </div>
                   <div className="text-center">
-                    <div className="font-bold text-2xl text-white mb-3">
+                    <div className="font-bold text-2xl text-[#f5f5f5] mb-3">
                       Drop your product image here
                     </div>
-                    <div className="text-purple-300 text-lg mb-4">
+                    <div className="text-[#a5a5a5] text-lg mb-4">
                       or click to browse files
                     </div>
-                    <div className="text-sm text-purple-400/70 bg-purple-500/10 px-4 py-2 rounded-full inline-block">
+                    <div className="text-sm text-[#a5a5a5] bg-[#2a2a2a]/50 px-4 py-2 rounded-full inline-block">
                       Supports JPEG, PNG, WebP up to 10MB
                     </div>
                   </div>
@@ -195,13 +195,13 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
             ) : (
               <div className="space-y-8">
                 <div className="relative max-w-lg mx-auto">
-                  <div className="relative overflow-hidden rounded-2xl shadow-2xl border-2 border-purple-400/30">
+                  <div className="relative overflow-hidden rounded-2xl shadow-2xl border-2 border-[#2a2a2a]/50">
                     <img
                       src={productImageUrl!}
                       alt="Product"
-                      className="w-full h-80 object-contain bg-slate-800/50"
+                      className="w-full h-80 object-contain bg-[#121212]/50"
                     />
-                    <div className="absolute top-4 right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow-lg">
+                    <div className="absolute top-4 right-4 bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] text-white px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow-lg">
                       <CheckCircle className="w-4 h-4" />
                       <span className="font-semibold">Uploaded</span>
                     </div>
@@ -226,13 +226,13 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 rounded-2xl p-6 mb-6">
-                    <p className="text-green-300 text-lg font-semibold mb-2">✅ Product image uploaded successfully!</p>
-                    <p className="text-green-400/80 text-sm">Ready for category detection and campaign creation</p>
+                  <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-6 mb-6">
+                    <p className="text-[#f5f5f5] text-lg font-semibold mb-2">✅ Product image uploaded successfully!</p>
+                    <p className="text-[#a5a5a5] text-sm">Ready for category detection and campaign creation</p>
                   </div>
                   <button
                     onClick={() => document.getElementById('product-upload')?.click()}
-                    className="text-purple-400 hover:text-purple-300 underline font-medium transition-colors"
+                    className="text-[#7e3ff2] hover:text-[#5a2db8] underline font-medium transition-colors"
                   >
                     Upload different image
                   </button>
@@ -531,54 +531,29 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Header */}
-      <div className="border-b border-purple-500/20 bg-slate-800/60 backdrop-blur-xl shadow-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#121212]">
+      {/* Step Progress Bar */}
+      <div className="bg-[#121212]/60 backdrop-blur-xl border-b border-[#2a2a2a]/30">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div className="p-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg">
-                <Target className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-                  Alchemy Studio
-                </h1>
-                <p className="text-purple-300 text-sm font-medium">AI-powered ad creation pipeline</p>
-              </div>
-            </div>
-            <button
-              onClick={onSwitchToCreator}
-              className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <Palette className="w-5 h-5" />
-              <span className="font-medium">Switch to Creator Studio</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Progress Steps */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Campaign Creation Progress</h2>
-              <p className="text-purple-300">Follow the steps to create your perfect ad campaign</p>
+              <h2 className="text-xl font-bold text-[#f5f5f5] mb-1">Campaign Workflow</h2>
+              <p className="text-[#a5a5a5] text-sm">Step-by-step ad creation pipeline</p>
             </div>
             <div className="text-right">
-              <span className="text-lg font-semibold text-white">
+              <span className="text-sm font-semibold text-[#f5f5f5]">
                 Step {currentStepIndex + 1} of {WORKFLOW_STEPS.length}
               </span>
-              <div className="w-32 h-2 bg-slate-700 rounded-full mt-2">
+              <div className="w-32 h-1.5 bg-[#2a2a2a] rounded-full mt-2">
                 <div 
-                  className="h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+                  className="h-1.5 bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] rounded-full transition-all duration-500"
                   style={{ width: `${((currentStepIndex + 1) / WORKFLOW_STEPS.length) * 100}%` }}
                 />
               </div>
             </div>
           </div>
           
+          {/* Progress Steps */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
             {WORKFLOW_STEPS.map((step, index) => {
               const isCompleted = completedSteps.has(step.id);
@@ -586,35 +561,37 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
               const isAccessible = index <= currentStepIndex || isCompleted;
               
               return (
-                <div key={step.id} className="flex items-center gap-3 min-w-0">
+                <div key={step.id} className="flex items-center gap-2 min-w-0">
                   <button
                     onClick={() => isAccessible && setCurrentStep(step.id)}
                     disabled={!isAccessible}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 min-w-0 transform hover:scale-105 ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-300 min-w-0 ${
                       isCurrent
-                        ? `bg-gradient-to-r ${step.color} text-white shadow-2xl border-2 border-white/20`
+                        ? "bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] text-white shadow-lg border border-[#7e3ff2]/30"
                         : isCompleted
-                        ? "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border-2 border-green-400/40 hover:from-green-500/30 hover:to-emerald-500/30"
+                        ? "bg-[#2a2a2a]/50 text-[#a5a5a5] border border-[#2a2a2a]/50"
                         : isAccessible
-                        ? "bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 border-2 border-slate-600/30 hover:border-slate-500/50"
-                        : "bg-slate-800/50 text-slate-500 cursor-not-allowed border-2 border-slate-700/30"
+                        ? "bg-[#2a2a2a]/30 text-[#a5a5a5] hover:bg-[#2a2a2a]/50 border border-[#2a2a2a]/30"
+                        : "bg-[#121212]/50 text-[#666] cursor-not-allowed border border-[#2a2a2a]/20"
                     }`}
                   >
-                    <step.icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-sm font-semibold truncate">{step.title}</span>
-                    {isCompleted && <CheckCircle className="w-5 h-5 flex-shrink-0 text-green-400" />}
+                    <step.icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-xs font-medium truncate">{step.title}</span>
+                    {isCompleted && <CheckCircle className="w-4 h-4 flex-shrink-0 text-[#7e3ff2]" />}
                   </button>
                   {index < WORKFLOW_STEPS.length - 1 && (
-                    <ArrowRight className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                    <ArrowRight className="w-3 h-3 text-[#2a2a2a] flex-shrink-0" />
                   )}
                 </div>
               );
             })}
           </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Main Content */}
-        <div className="bg-slate-800/40 backdrop-blur-xl rounded-3xl border border-purple-500/20 p-10 shadow-2xl">
+        <div className="bg-[#121212]/40 backdrop-blur-xl rounded-3xl border border-[#2a2a2a]/30 p-8 shadow-2xl">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
@@ -628,14 +605,14 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-12 pt-8 border-t border-slate-700/50">
+          <div className="flex items-center justify-between mt-12 pt-8 border-t border-[#2a2a2a]/30">
             <button
               onClick={prevStep}
               disabled={currentStepIndex === 0}
-              className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+              className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
                 currentStepIndex === 0
-                  ? "bg-slate-800/50 text-slate-500 cursor-not-allowed border-2 border-slate-700/30"
-                  : "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 text-white border-2 border-slate-500/30 hover:border-slate-400/50 shadow-lg hover:shadow-xl"
+                  ? "bg-[#121212]/50 text-[#666] cursor-not-allowed border border-[#2a2a2a]/30"
+                  : "bg-[#2a2a2a]/50 hover:bg-[#2a2a2a]/70 text-[#f5f5f5] border border-[#2a2a2a]/50 hover:border-[#7e3ff2]/30 shadow-lg hover:shadow-xl"
               }`}
             >
               <ArrowLeft className="w-5 h-5" />
@@ -643,10 +620,10 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
             </button>
 
             <div className="text-center">
-              <div className="text-lg font-bold text-white mb-1">
+              <div className="text-lg font-bold text-[#f5f5f5] mb-1">
                 {currentStepData.title}
               </div>
-              <div className="text-sm text-slate-400">
+              <div className="text-sm text-[#a5a5a5]">
                 {currentStepData.description}
               </div>
             </div>
@@ -654,10 +631,10 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
             <button
               onClick={nextStep}
               disabled={currentStepIndex === WORKFLOW_STEPS.length - 1 || !completedSteps.has(currentStep)}
-              className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+              className={`flex items-center gap-3 px-6 py-3 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
                 currentStepIndex === WORKFLOW_STEPS.length - 1 || !completedSteps.has(currentStep)
-                  ? "bg-slate-800/50 text-slate-500 cursor-not-allowed border-2 border-slate-700/30"
-                  : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-2 border-blue-500/30 hover:border-blue-400/50 shadow-lg hover:shadow-xl"
+                  ? "bg-[#121212]/50 text-[#666] cursor-not-allowed border border-[#2a2a2a]/30"
+                  : "bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] hover:from-[#6d2ee6] hover:to-[#4a1f9a] text-white border border-[#7e3ff2]/30 hover:border-[#7e3ff2]/50 shadow-lg hover:shadow-xl"
               }`}
             >
               <span className="font-semibold">

@@ -1,0 +1,243 @@
+"use client";
+
+import React, { useState, useCallback } from "react";
+import { Upload, Eye, Sparkles, X } from "lucide-react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface ProductCategoryDetectorProps {
+  onCategoryDetected?: (category: string) => void;
+}
+
+const CATEGORY_EMOJIS: Record<string, string> = {
+  shoes: "👟",
+  beauty: "💄",
+  beverage: "🥤",
+  clothing: "👕",
+  electronics: "📱",
+  home: "🏠",
+  food: "🍿",
+  accessories: "👜",
+  sports: "⚽",
+  automotive: "🚗",
+  other: "📦"
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  shoes: "Shoes & Footwear",
+  beauty: "Beauty & Cosmetics",
+  beverage: "Beverages",
+  clothing: "Clothing & Apparel",
+  electronics: "Electronics",
+  home: "Home & Living",
+  food: "Food & Snacks",
+  accessories: "Accessories",
+  sports: "Sports & Fitness",
+  automotive: "Automotive",
+  other: "Other Products"
+};
+
+const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
+  onCategoryDetected
+}) => {
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectedCategory, setDetectedCategory] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImageUrl(URL.createObjectURL(file));
+      setDetectedCategory(null);
+      setError(null);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
+    
+    if (imageFile) {
+      setImageFile(imageFile);
+      setImageUrl(URL.createObjectURL(imageFile));
+      setDetectedCategory(null);
+      setError(null);
+    }
+  }, []);
+
+  const detectCategory = useCallback(async () => {
+    if (!imageFile) return;
+
+    setIsDetecting(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('imageFile', imageFile);
+
+      const response = await fetch('/api/gemini/category', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setDetectedCategory(result.category);
+      onCategoryDetected?.(result.category);
+    } catch (err) {
+      console.error('Error detecting category:', err);
+      setError('Failed to detect product category. Please try again.');
+    } finally {
+      setIsDetecting(false);
+    }
+  }, [imageFile, onCategoryDetected]);
+
+  const reset = useCallback(() => {
+    setImageFile(null);
+    if (imageUrl) {
+      URL.revokeObjectURL(imageUrl);
+      setImageUrl(null);
+    }
+    setDetectedCategory(null);
+    setError(null);
+  }, [imageUrl]);
+
+  return (
+    <div className="w-full max-w-2xl mx-auto">
+      <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700">
+        <div className="text-center mb-6">
+          <h3 className="text-xl font-bold text-gray-100 mb-2">
+            Product Category Detection
+          </h3>
+          <p className="text-gray-400 text-sm">
+            Upload a product image and let AI automatically detect its category
+          </p>
+        </div>
+
+        {!imageFile ? (
+          <div
+            className="border-2 border-dashed border-gray-600 rounded-lg p-8 cursor-pointer transition-colors hover:border-purple-500 hover:bg-purple-500/10"
+            onClick={() => document.getElementById('category-image-input')?.click()}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            <div className="flex flex-col items-center gap-4 text-gray-400">
+              <Upload className="w-12 h-12" />
+              <div className="text-center">
+                <div className="font-medium text-lg text-gray-200 mb-1">
+                  Drop product image here, or click to upload
+                </div>
+                <div className="text-sm opacity-80">
+                  PNG, JPG, WEBP up to 10MB
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="relative">
+              <div className="aspect-video overflow-hidden rounded-lg border border-gray-600">
+                <Image
+                  src={imageUrl!}
+                  alt="Product to analyze"
+                  className="w-full h-full object-contain"
+                  width={400}
+                  height={300}
+                />
+              </div>
+              <button
+                onClick={reset}
+                className="absolute top-2 right-2 p-1.5 bg-gray-800/80 hover:bg-gray-700 rounded-full transition-colors"
+                title="Remove image"
+              >
+                <X className="w-4 h-4 text-gray-300" />
+              </button>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={detectCategory}
+                disabled={isDetecting}
+                className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg transition-colors"
+              >
+                {isDetecting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+                    <span>Detecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    <span>Detect Category</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              {detectedCategory && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">
+                      {CATEGORY_EMOJIS[detectedCategory]}
+                    </div>
+                    <div>
+                      <div className="font-medium text-green-300">
+                        {CATEGORY_LABELS[detectedCategory]}
+                      </div>
+                      <div className="text-sm text-green-400 opacity-80">
+                        Category detected successfully
+                      </div>
+                    </div>
+                    <div className="ml-auto">
+                      <Sparkles className="w-5 h-5 text-green-400" />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        <input
+          id="category-image-input"
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageUpload}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default ProductCategoryDetector;

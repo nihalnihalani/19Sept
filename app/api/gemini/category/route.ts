@@ -2,13 +2,22 @@ import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
 if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable is not set.");
+  console.error("GEMINI_API_KEY environment variable is not set.");
+  // Don't throw during module load, handle in the route instead
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: Request) {
   try {
+    // Check if API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY environment variable is not set. Please configure your Gemini API key." },
+        { status: 500 }
+      );
+    }
+
     const formData = await req.formData();
     const imageFile = formData.get("imageFile") as File;
 

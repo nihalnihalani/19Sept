@@ -91,15 +91,28 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Server error (${response.status})`;
+        
+        if (response.status === 500 && errorMessage.includes('GEMINI_API_KEY')) {
+          throw new Error('API key not configured. Please set up your Gemini API key.');
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
       setDetectedCategory(result.category);
       onCategoryDetected?.(result.category);
     } catch (err) {
       console.error('Error detecting category:', err);
-      setError('Failed to detect product category. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to detect product category. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsDetecting(false);
     }

@@ -230,71 +230,150 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-2xl font-bold text-white mb-4">Product Category Detection</h3>
-              <p className="text-gray-400 mb-8">AI will analyze your product image to detect its category for better campaign targeting</p>
+              <p className="text-gray-400 mb-8">AI will analyze your uploaded product image to detect its category for better campaign targeting</p>
             </div>
 
-            <ProductCategoryDetector
-              detectedCategory={detectedProductCategory}
-              setDetectedCategory={setDetectedProductCategory}
-              onCategoryDetected={(category) => {
-                console.log('Detected category:', category);
-                setDetectedProductCategory(category);
-                setCompletedSteps(prev => new Set([...prev, "category"]));
-              }}
-            />
-
-            {/* Display detected category */}
-            {detectedProductCategory && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-2xl mx-auto"
-              >
-                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/40 rounded-xl p-6 shadow-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="text-4xl animate-bounce">
-                      {detectedProductCategory === 'shoes' && '👟'}
-                      {detectedProductCategory === 'beauty' && '💄'}
-                      {detectedProductCategory === 'beverage' && '🥤'}
-                      {detectedProductCategory === 'clothing' && '👕'}
-                      {detectedProductCategory === 'electronics' && '📱'}
-                      {detectedProductCategory === 'home' && '🏠'}
-                      {detectedProductCategory === 'food' && '🍿'}
-                      {detectedProductCategory === 'accessories' && '👜'}
-                      {detectedProductCategory === 'sports' && '⚽'}
-                      {detectedProductCategory === 'automotive' && '🚗'}
-                      {detectedProductCategory === 'other' && '📦'}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-lg font-bold text-green-200 mb-1">
-                        {detectedProductCategory === 'shoes' && 'Shoes & Footwear'}
-                        {detectedProductCategory === 'beauty' && 'Beauty & Cosmetics'}
-                        {detectedProductCategory === 'beverage' && 'Beverages'}
-                        {detectedProductCategory === 'clothing' && 'Clothing & Apparel'}
-                        {detectedProductCategory === 'electronics' && 'Electronics'}
-                        {detectedProductCategory === 'home' && 'Home & Living'}
-                        {detectedProductCategory === 'food' && 'Food & Snacks'}
-                        {detectedProductCategory === 'accessories' && 'Accessories'}
-                        {detectedProductCategory === 'sports' && 'Sports & Fitness'}
-                        {detectedProductCategory === 'automotive' && 'Automotive'}
-                        {detectedProductCategory === 'other' && 'Other Products'}
-                      </div>
-                      <div className="text-sm text-green-300 opacity-90">
-                        ✅ Product category detected and saved
-                      </div>
-                      <div className="text-xs text-green-400/70 mt-2">
-                        Category variable: <code className="bg-green-500/20 px-1 rounded">{detectedProductCategory}</code>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-6 h-6 text-green-400 animate-pulse" />
-                      <div className="text-xs text-green-400 font-medium">
-                        AI Powered
-                      </div>
+            {productImage && productImageUrl ? (
+              <div className="space-y-6">
+                {/* Display the uploaded image */}
+                <div className="flex justify-center">
+                  <div className="relative max-w-md">
+                    <img
+                      src={productImageUrl}
+                      alt="Product to analyze"
+                      className="w-full h-64 object-contain rounded-lg border border-gray-600"
+                    />
+                    <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Uploaded
                     </div>
                   </div>
                 </div>
-              </motion.div>
+
+                {/* Category Detection Button */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={async () => {
+                      if (!productImage) return;
+                      
+                      try {
+                        const formData = new FormData();
+                        formData.append('imageFile', productImage);
+
+                        const response = await fetch('/api/gemini/category', {
+                          method: 'POST',
+                          body: formData,
+                        });
+
+                        if (!response.ok) {
+                          const errorData = await response.json().catch(() => ({}));
+                          const errorMessage = errorData.error || `Server error (${response.status})`;
+                          throw new Error(errorMessage);
+                        }
+
+                        const result = await response.json();
+                        if (result.error) {
+                          throw new Error(result.error);
+                        }
+
+                        console.log('Category detection result:', result);
+                        setDetectedProductCategory(result.category);
+                        setCompletedSteps(prev => new Set([...prev, "category"]));
+                      } catch (err) {
+                        console.error('Error detecting category:', err);
+                        // You could add error state handling here if needed
+                      }
+                    }}
+                    disabled={!!detectedProductCategory}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
+                      detectedProductCategory
+                        ? "bg-green-600 text-white cursor-not-allowed"
+                        : "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                    }`}
+                  >
+                    {detectedProductCategory ? (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        <span>Category Detected</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-5 h-5" />
+                        <span>Detect Product Category</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Display detected category */}
+                {detectedProductCategory && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full max-w-2xl mx-auto"
+                  >
+                    <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/40 rounded-xl p-6 shadow-lg">
+                      <div className="flex items-center gap-4">
+                        <div className="text-4xl animate-bounce">
+                          {detectedProductCategory === 'shoes' && '👟'}
+                          {detectedProductCategory === 'beauty' && '💄'}
+                          {detectedProductCategory === 'beverage' && '🥤'}
+                          {detectedProductCategory === 'clothing' && '👕'}
+                          {detectedProductCategory === 'electronics' && '📱'}
+                          {detectedProductCategory === 'home' && '🏠'}
+                          {detectedProductCategory === 'food' && '🍿'}
+                          {detectedProductCategory === 'accessories' && '👜'}
+                          {detectedProductCategory === 'sports' && '⚽'}
+                          {detectedProductCategory === 'automotive' && '🚗'}
+                          {detectedProductCategory === 'other' && '📦'}
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-lg font-bold text-green-200 mb-1">
+                            {detectedProductCategory === 'shoes' && 'Shoes & Footwear'}
+                            {detectedProductCategory === 'beauty' && 'Beauty & Cosmetics'}
+                            {detectedProductCategory === 'beverage' && 'Beverages'}
+                            {detectedProductCategory === 'clothing' && 'Clothing & Apparel'}
+                            {detectedProductCategory === 'electronics' && 'Electronics'}
+                            {detectedProductCategory === 'home' && 'Home & Living'}
+                            {detectedProductCategory === 'food' && 'Food & Snacks'}
+                            {detectedProductCategory === 'accessories' && 'Accessories'}
+                            {detectedProductCategory === 'sports' && 'Sports & Fitness'}
+                            {detectedProductCategory === 'automotive' && 'Automotive'}
+                            {detectedProductCategory === 'other' && 'Other Products'}
+                          </div>
+                          <div className="text-sm text-green-300 opacity-90">
+                            ✅ Product category detected and saved
+                          </div>
+                          <div className="text-xs text-green-400/70 mt-2">
+                            Category variable: <code className="bg-green-500/20 px-1 rounded">{detectedProductCategory}</code>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-6 h-6 text-green-400 animate-pulse" />
+                          <div className="text-xs text-green-400 font-medium">
+                            AI Powered
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="p-4 bg-gray-800/50 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-4">No Product Image Found</h3>
+                <p className="text-gray-400 mb-8">Please go back to Step 1 and upload a product image first</p>
+                <button
+                  onClick={() => setCurrentStep("upload")}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors mx-auto"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Upload
+                </button>
+              </div>
             )}
           </div>
         );

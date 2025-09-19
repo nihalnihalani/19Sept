@@ -62,7 +62,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
       setDetectedCategory(null);
       setError(null);
     }
-  }, []);
+  }, [setDetectedCategory]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -81,7 +81,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
       setDetectedCategory(null);
       setError(null);
     }
-  }, []);
+  }, [setDetectedCategory]);
 
   const detectCategory = useCallback(async () => {
     if (!imageFile) return;
@@ -279,11 +279,9 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
           className="hidden"
           onChange={handleImageUpload}
         />
-        </div>
       </div>
     </div>
   );
 };
 
 export default ProductCategoryDetector;
-

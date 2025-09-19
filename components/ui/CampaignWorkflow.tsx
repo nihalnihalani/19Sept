@@ -17,8 +17,11 @@ import {
   Image as ImageIcon,
   Target,
   Users,
-  BarChart3
+  BarChart3,
+  Sparkles,
+  X
 } from "lucide-react";
+import ProductCategoryDetector from "./ProductCategoryDetector";
 
 interface CampaignWorkflowProps {
   onSwitchToCreator: () => void;
@@ -26,6 +29,7 @@ interface CampaignWorkflowProps {
 
 type WorkflowStep = 
   | "upload"
+  | "category"
   | "analysis" 
   | "generation"
   | "personalization"
@@ -41,6 +45,13 @@ const WORKFLOW_STEPS = [
     description: "Upload your product image to start the campaign creation process",
     icon: Upload,
     color: "from-blue-500 to-cyan-500"
+  },
+  {
+    id: "category" as WorkflowStep,
+    title: "Product Category Detection",
+    description: "AI automatically detects your product category for better targeting",
+    icon: Eye,
+    color: "from-green-500 to-emerald-500"
   },
   {
     id: "analysis" as WorkflowStep,
@@ -98,6 +109,7 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
   const [completedSteps, setCompletedSteps] = useState<Set<WorkflowStep>>(new Set());
   const [productImage, setProductImage] = useState<File | null>(null);
   const [productImageUrl, setProductImageUrl] = useState<string | null>(null);
+  const [detectedProductCategory, setDetectedProductCategory] = useState<string | null>(null);
 
   const currentStepIndex = WORKFLOW_STEPS.findIndex(step => step.id === currentStep);
   const currentStepData = WORKFLOW_STEPS[currentStepIndex];
@@ -210,6 +222,80 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
               className="hidden"
               onChange={handleImageUpload}
             />
+          </div>
+        );
+
+      case "category":
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-white mb-4">Product Category Detection</h3>
+              <p className="text-gray-400 mb-8">AI will analyze your product image to detect its category for better campaign targeting</p>
+            </div>
+
+            <ProductCategoryDetector
+              detectedCategory={detectedProductCategory}
+              setDetectedCategory={setDetectedProductCategory}
+              onCategoryDetected={(category) => {
+                console.log('Detected category:', category);
+                setDetectedProductCategory(category);
+                setCompletedSteps(prev => new Set([...prev, "category"]));
+              }}
+            />
+
+            {/* Display detected category */}
+            {detectedProductCategory && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-2xl mx-auto"
+              >
+                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/40 rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl animate-bounce">
+                      {detectedProductCategory === 'shoes' && '👟'}
+                      {detectedProductCategory === 'beauty' && '💄'}
+                      {detectedProductCategory === 'beverage' && '🥤'}
+                      {detectedProductCategory === 'clothing' && '👕'}
+                      {detectedProductCategory === 'electronics' && '📱'}
+                      {detectedProductCategory === 'home' && '🏠'}
+                      {detectedProductCategory === 'food' && '🍿'}
+                      {detectedProductCategory === 'accessories' && '👜'}
+                      {detectedProductCategory === 'sports' && '⚽'}
+                      {detectedProductCategory === 'automotive' && '🚗'}
+                      {detectedProductCategory === 'other' && '📦'}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-lg font-bold text-green-200 mb-1">
+                        {detectedProductCategory === 'shoes' && 'Shoes & Footwear'}
+                        {detectedProductCategory === 'beauty' && 'Beauty & Cosmetics'}
+                        {detectedProductCategory === 'beverage' && 'Beverages'}
+                        {detectedProductCategory === 'clothing' && 'Clothing & Apparel'}
+                        {detectedProductCategory === 'electronics' && 'Electronics'}
+                        {detectedProductCategory === 'home' && 'Home & Living'}
+                        {detectedProductCategory === 'food' && 'Food & Snacks'}
+                        {detectedProductCategory === 'accessories' && 'Accessories'}
+                        {detectedProductCategory === 'sports' && 'Sports & Fitness'}
+                        {detectedProductCategory === 'automotive' && 'Automotive'}
+                        {detectedProductCategory === 'other' && 'Other Products'}
+                      </div>
+                      <div className="text-sm text-green-300 opacity-90">
+                        ✅ Product category detected and saved
+                      </div>
+                      <div className="text-xs text-green-400/70 mt-2">
+                        Category variable: <code className="bg-green-500/20 px-1 rounded">{detectedProductCategory}</code>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-6 h-6 text-green-400 animate-pulse" />
+                      <div className="text-xs text-green-400 font-medium">
+                        AI Powered
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         );
 

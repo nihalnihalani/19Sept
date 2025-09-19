@@ -7,12 +7,9 @@ import {
   Image as ImageIcon, 
   Film, 
   Upload, 
-  Eye,
-  ArrowLeft,
-  Sparkles
+  ArrowLeft
 } from "lucide-react";
 import Composer from "./Composer";
-import ProductCategoryDetector from "./ProductCategoryDetector";
 
 interface CreatorStudioProps {
   onSwitchToCampaign: () => void;
@@ -23,12 +20,10 @@ type StudioMode =
   | "edit-image"
   | "compose-image"
   | "create-video"
-  | "product-gallery"
-  | "product-category";
+  | "product-gallery";
 
 const CreatorStudio: React.FC<CreatorStudioProps> = ({ onSwitchToCampaign }) => {
   const [mode, setMode] = useState<StudioMode>("create-image");
-  const [detectedProductCategory, setDetectedProductCategory] = useState<string | null>(null);
 
   const getTabText = (mode: StudioMode) => {
     switch (mode) {
@@ -42,8 +37,6 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({ onSwitchToCampaign }) => 
         return "Create Video";
       case "product-gallery":
         return "Product Gallery";
-      case "product-category":
-        return "Category Detection";
       default:
         return mode;
     }
@@ -61,83 +54,12 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({ onSwitchToCampaign }) => 
         return Film;
       case "product-gallery":
         return ImageIcon;
-      case "product-category":
-        return Eye;
       default:
         return ImageIcon;
     }
   };
 
   const renderModeContent = () => {
-    if (mode === "product-category") {
-      return (
-        <div className="space-y-8">
-          <ProductCategoryDetector
-            detectedCategory={detectedProductCategory}
-            setDetectedCategory={setDetectedProductCategory}
-            onCategoryDetected={(category) => {
-              console.log('Detected category:', category);
-              setDetectedProductCategory(category);
-            }}
-          />
-          
-          {/* Display detected category */}
-          {detectedProductCategory && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="w-full max-w-2xl mx-auto"
-            >
-              <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/40 rounded-xl p-6 shadow-lg">
-                <div className="flex items-center gap-4">
-                  <div className="text-4xl animate-bounce">
-                    {detectedProductCategory === 'shoes' && '👟'}
-                    {detectedProductCategory === 'beauty' && '💄'}
-                    {detectedProductCategory === 'beverage' && '🥤'}
-                    {detectedProductCategory === 'clothing' && '👕'}
-                    {detectedProductCategory === 'electronics' && '📱'}
-                    {detectedProductCategory === 'home' && '🏠'}
-                    {detectedProductCategory === 'food' && '🍿'}
-                    {detectedProductCategory === 'accessories' && '👜'}
-                    {detectedProductCategory === 'sports' && '⚽'}
-                    {detectedProductCategory === 'automotive' && '🚗'}
-                    {detectedProductCategory === 'other' && '📦'}
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-lg font-bold text-green-200 mb-1">
-                      {detectedProductCategory === 'shoes' && 'Shoes & Footwear'}
-                      {detectedProductCategory === 'beauty' && 'Beauty & Cosmetics'}
-                      {detectedProductCategory === 'beverage' && 'Beverages'}
-                      {detectedProductCategory === 'clothing' && 'Clothing & Apparel'}
-                      {detectedProductCategory === 'electronics' && 'Electronics'}
-                      {detectedProductCategory === 'home' && 'Home & Living'}
-                      {detectedProductCategory === 'food' && 'Food & Snacks'}
-                      {detectedProductCategory === 'accessories' && 'Accessories'}
-                      {detectedProductCategory === 'sports' && 'Sports & Fitness'}
-                      {detectedProductCategory === 'automotive' && 'Automotive'}
-                      {detectedProductCategory === 'other' && 'Other Products'}
-                    </div>
-                    <div className="text-sm text-green-300 opacity-90">
-                      ✅ Product category detected and saved
-                    </div>
-                    <div className="text-xs text-green-400/70 mt-2">
-                      Category variable: <code className="bg-green-500/20 px-1 rounded">{detectedProductCategory}</code>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-6 h-6 text-green-400 animate-pulse" />
-                    <div className="text-xs text-green-400 font-medium">
-                      AI Powered
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </div>
-      );
-    }
-
     return (
       <div className="text-center py-12">
         <div className="p-4 bg-gray-800/50 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
@@ -188,7 +110,6 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({ onSwitchToCampaign }) => 
               { id: "compose-image" as StudioMode, label: "Compose Image", icon: Palette },
               { id: "create-video" as StudioMode, label: "Create Video", icon: Film },
               { id: "product-gallery" as StudioMode, label: "Product Gallery", icon: ImageIcon },
-              { id: "product-category" as StudioMode, label: "Category Detection", icon: Eye },
             ].map((tab) => {
               const Icon = tab.icon;
               return (

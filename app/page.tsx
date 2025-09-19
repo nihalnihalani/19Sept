@@ -65,6 +65,7 @@ const VeoStudio: React.FC = () => {
   const [imagenBusy, setImagenBusy] = useState(false);
   const [geminiBusy, setGeminiBusy] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null); // data URL
+  const [detectedProductCategory, setDetectedProductCategory] = useState<string | null>(null);
 
   // Debug multipleImageFiles state
   useEffect(() => {
@@ -221,6 +222,7 @@ const VeoStudio: React.FC = () => {
     setVideoUrl(null);
     setImagenBusy(false);
     setGeminiBusy(false);
+    setDetectedProductCategory(null);
     if (videoBlobRef.current) {
       URL.revokeObjectURL(URL.createObjectURL(videoBlobRef.current));
       videoBlobRef.current = null;
@@ -663,11 +665,68 @@ const VeoStudio: React.FC = () => {
         <div className="relative min-h-screen w-full">
           <div className="flex flex-col items-center justify-start min-h-[calc(100vh-80px)] pt-8 pb-60 px-4">
             <ProductCategoryDetector 
+              detectedCategory={detectedProductCategory}
+              setDetectedCategory={setDetectedProductCategory}
               onCategoryDetected={(category) => {
                 console.log('Detected category:', category);
+                setDetectedProductCategory(category);
                 // You can add additional logic here, like setting the category for other modes
               }}
             />
+            
+            {/* Display detected category below the detector */}
+            {detectedProductCategory && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 w-full max-w-2xl"
+              >
+                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/40 rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl animate-bounce">
+                      {detectedProductCategory === 'shoes' && '👟'}
+                      {detectedProductCategory === 'beauty' && '💄'}
+                      {detectedProductCategory === 'beverage' && '🥤'}
+                      {detectedProductCategory === 'clothing' && '👕'}
+                      {detectedProductCategory === 'electronics' && '📱'}
+                      {detectedProductCategory === 'home' && '🏠'}
+                      {detectedProductCategory === 'food' && '🍿'}
+                      {detectedProductCategory === 'accessories' && '👜'}
+                      {detectedProductCategory === 'sports' && '⚽'}
+                      {detectedProductCategory === 'automotive' && '🚗'}
+                      {detectedProductCategory === 'other' && '📦'}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-lg font-bold text-green-200 mb-1">
+                        {detectedProductCategory === 'shoes' && 'Shoes & Footwear'}
+                        {detectedProductCategory === 'beauty' && 'Beauty & Cosmetics'}
+                        {detectedProductCategory === 'beverage' && 'Beverages'}
+                        {detectedProductCategory === 'clothing' && 'Clothing & Apparel'}
+                        {detectedProductCategory === 'electronics' && 'Electronics'}
+                        {detectedProductCategory === 'home' && 'Home & Living'}
+                        {detectedProductCategory === 'food' && 'Food & Snacks'}
+                        {detectedProductCategory === 'accessories' && 'Accessories'}
+                        {detectedProductCategory === 'sports' && 'Sports & Fitness'}
+                        {detectedProductCategory === 'automotive' && 'Automotive'}
+                        {detectedProductCategory === 'other' && 'Other Products'}
+                      </div>
+                      <div className="text-sm text-green-300 opacity-90">
+                        ✅ Product category detected and saved
+                      </div>
+                      <div className="text-xs text-green-400/70 mt-2">
+                        Category variable: <code className="bg-green-500/20 px-1 rounded">{detectedProductCategory}</code>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-6 h-6 text-green-400 animate-pulse" />
+                      <div className="text-xs text-green-400 font-medium">
+                        AI Powered
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
           <Composer
             mode={mode}

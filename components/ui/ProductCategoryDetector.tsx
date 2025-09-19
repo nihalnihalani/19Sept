@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface ProductCategoryDetectorProps {
   onCategoryDetected?: (category: string) => void;
+  detectedCategory?: string;
+  setDetectedCategory?: (category: string | null) => void;
 }
 
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -38,13 +40,19 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
-  onCategoryDetected
+  onCategoryDetected,
+  detectedCategory: externalDetectedCategory,
+  setDetectedCategory: externalSetDetectedCategory
 }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [detectedCategory, setDetectedCategory] = useState<string | null>(null);
+  const [internalDetectedCategory, setInternalDetectedCategory] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Use external state if provided, otherwise use internal state
+  const detectedCategory = externalDetectedCategory !== undefined ? externalDetectedCategory : internalDetectedCategory;
+  const setDetectedCategory = externalSetDetectedCategory || setInternalDetectedCategory;
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,36 +138,8 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
   }, [imageUrl]);
 
   return (
-    <>
-      {/* Floating notification for detected category */}
-      {detectedCategory && (
-        <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 50, scale: 0.9 }}
-          className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50 max-w-md mx-4"
-        >
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 rounded-xl shadow-2xl border border-green-400">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl animate-bounce">
-                {CATEGORY_EMOJIS[detectedCategory] || "📦"}
-              </div>
-              <div>
-                <div className="font-bold text-lg">
-                  {CATEGORY_LABELS[detectedCategory] || "Unknown Category"}
-                </div>
-                <div className="text-sm opacity-90">
-                  Category detected successfully!
-                </div>
-              </div>
-              <Sparkles className="w-5 h-5 animate-pulse ml-auto" />
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      <div className="w-full max-w-2xl mx-auto relative z-10">
-        <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700">
+    <div className="w-full max-w-2xl mx-auto relative z-10">
+      <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700">
         <div className="text-center mb-6">
           <h3 className="text-xl font-bold text-gray-100 mb-2">
             Product Category Detection
@@ -301,7 +281,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
         />
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

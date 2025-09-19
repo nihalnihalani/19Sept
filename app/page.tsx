@@ -17,6 +17,7 @@ import Header from '@/components/ui/Header';
 import { AnimatedLayout } from '@/components/ui/Animation';
 import { motion } from "framer-motion";
 import Logo from "@/components/ui/Logo";
+import CompetitiveAnalysis from "@/components/ui/CompetitiveAnalysis";
 
 type VeoOperationName = string | null;
 
@@ -25,7 +26,8 @@ type StudioMode =
   | "edit-image"
   | "compose-image"
   | "create-video"
-  | "product-gallery";
+  | "product-gallery"
+  | "competitive-analysis";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -652,6 +654,11 @@ const VeoStudio: React.FC = () => {
   // If in product gallery mode, render the gallery component
   if (mode === "product-gallery") {
     return <ProductGallery onBack={() => setMode('create-image')} />;
+  }
+
+  // If in competitive analysis mode, render the competitive analysis component
+  if (mode === "competitive-analysis") {
+    return <CompetitiveAnalysis onBack={() => setMode('create-image')} />;
   }
 
   return (

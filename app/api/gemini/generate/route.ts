@@ -16,33 +16,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image-preview",
-      contents: prompt,
+    const resp = await ai.models.generateImages({
+      model: "imagen-4.0-fast-generate-001",
+      prompt,
+      config: {
+        aspectRatio: "16:9",
+      },
     });
 
-    // Process the response to extract the image
-    let imageData = null;
-    let imageMimeType = "image/png";
-
-    for (const part of response.candidates[0].content.parts) {
-      if (part.text) {
-        console.log("Generated text:", part.text);
-      } else if (part.inlineData) {
-        imageData = part.inlineData.data;
-        imageMimeType = part.inlineData.mimeType || "image/png";
-        break;
-      }
-    }
-
-    if (!imageData) {
-      return NextResponse.json({ error: "No image generated" }, { status: 500 });
+    const image = resp.generatedImages?.[0]?.image;
+    if (!image?.imageBytes) {
+      return NextResponse.json({ error: "No image returned" }, { status: 500 });
     }
 
     return NextResponse.json({
       image: {
-        imageBytes: imageData,
-        mimeType: imageMimeType,
+        imageBytes: image.imageBytes,
+        mimeType: image.mimeType || "image/png",
       },
     });
   } catch (error) {

@@ -10,6 +10,7 @@ import {
   Download,
   Sparkles,
   Grid3X3,
+  TrendingUp,
 } from "lucide-react";
 import ModelSelector from "@/components/ui/ModelSelector";
 import {
@@ -23,7 +24,8 @@ type StudioMode =
   | "edit-image"
   | "compose-image"
   | "create-video"
-  | "product-gallery";
+  | "product-gallery"
+  | "competitive-analysis";
 
 interface ComposerProps {
   mode: StudioMode;
@@ -100,6 +102,8 @@ const Composer: React.FC<ComposerProps> = ({
         return "Create Video";
       case "product-gallery":
         return "Product Gallery";
+      case "competitive-analysis":
+        return "Competitive Analysis";
       default:
         return "Unknown";
     }
@@ -353,6 +357,24 @@ const Composer: React.FC<ComposerProps> = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>Browse and remix video gallery</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setMode("competitive-analysis")}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-all duration-200 flex-1 ${
+                  mode === "competitive-analysis"
+                    ? "bg-purple-600/50 text-white shadow-inner"
+                    : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                {getTabText("competitive-analysis")}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>AI-powered competitive analysis and product generation</p>
             </TooltipContent>
           </Tooltip>
         </div>

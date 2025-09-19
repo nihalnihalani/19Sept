@@ -202,6 +202,24 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
                     <CheckCircle className="w-3 h-3" />
                     Uploaded
                   </div>
+                  <button
+                    onClick={() => {
+                      setProductImage(null);
+                      if (productImageUrl) {
+                        URL.revokeObjectURL(productImageUrl);
+                        setProductImageUrl(null);
+                      }
+                      setCompletedSteps(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete("upload");
+                        return newSet;
+                      });
+                    }}
+                    className="absolute top-2 left-2 p-1.5 bg-red-500/80 hover:bg-red-600 rounded-full transition-colors"
+                    title="Remove image"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
                 </div>
                 <div className="text-center">
                   <p className="text-green-400 mb-4">✅ Product image uploaded successfully!</p>
@@ -247,6 +265,26 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
                       <CheckCircle className="w-3 h-3" />
                       Uploaded
                     </div>
+                    <button
+                      onClick={() => {
+                        setProductImage(null);
+                        if (productImageUrl) {
+                          URL.revokeObjectURL(productImageUrl);
+                          setProductImageUrl(null);
+                        }
+                        setDetectedProductCategory(null);
+                        setCompletedSteps(prev => {
+                          const newSet = new Set(prev);
+                          newSet.delete("upload");
+                          newSet.delete("category");
+                          return newSet;
+                        });
+                      }}
+                      className="absolute top-2 left-2 p-1.5 bg-red-500/80 hover:bg-red-600 rounded-full transition-colors"
+                      title="Remove image"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
                   </div>
                 </div>
 

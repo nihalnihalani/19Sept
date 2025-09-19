@@ -19,12 +19,66 @@ import {
   Users,
   BarChart3,
   Sparkles,
-  X
+  X,
+  Play,
+  Loader2
 } from "lucide-react";
 import ProductCategoryDetector from "./ProductCategoryDetector";
 
 interface CampaignWorkflowProps {
   onSwitchToCreator: () => void;
+}
+
+interface ScrapedAd {
+  id: string;
+  brand: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  productUrl: string;
+  price?: string;
+  scrapedAt: string;
+  platform?: string;
+}
+
+interface CompetitiveAnalysisResult {
+  detectedCategory: {
+    id: string;
+    name: string;
+  };
+  confidence: number;
+  imageDescription: string;
+  competitors: Array<{
+    id: string;
+    name: string;
+    website: string;
+  }>;
+  scrapedAds: ScrapedAd[];
+  competitiveImage: {
+    imageBytes: string;
+    mimeType: string;
+  };
+  insights: {
+    totalCompetitorsAnalyzed: number;
+    totalAdsScraped: number;
+    averagePrice: number;
+    topBrands: string[];
+  };
+}
+
+interface GeneratedContent {
+  images: Array<{
+    id: string;
+    url: string;
+    prompt: string;
+    style: string;
+  }>;
+  videos: Array<{
+    id: string;
+    url: string;
+    prompt: string;
+    style: string;
+  }>;
 }
 
 type WorkflowStep = 
@@ -110,6 +164,16 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
   const [productImage, setProductImage] = useState<File | null>(null);
   const [productImageUrl, setProductImageUrl] = useState<string | null>(null);
   const [detectedProductCategory, setDetectedProductCategory] = useState<string | null>(null);
+  
+  // Competitive Analysis State
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [competitiveAnalysis, setCompetitiveAnalysis] = useState<CompetitiveAnalysisResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  
+  // Generated Content State
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent>({ images: [], videos: [] });
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   const currentStepIndex = WORKFLOW_STEPS.findIndex(step => step.id === currentStep);
   const currentStepData = WORKFLOW_STEPS[currentStepIndex];
@@ -155,6 +219,123 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
       setCurrentStep(prevStepId);
     }
   }, [currentStepIndex]);
+
+  const handleCompetitiveAnalysis = useCallback(async () => {
+    if (!productImage) return;
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setCompetitiveAnalysis(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("imageFile", productImage);
+      formData.append("prompt", "Analyze this product for competitive intelligence");
+
+      console.log("Starting competitive analysis...");
+      
+      const response = await fetch("/api/competitive-analysis", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      console.log("Analysis response:", data);
+
+      if (data.success) {
+        setCompetitiveAnalysis(data.analysis);
+        setCompletedSteps(prev => new Set([...prev, "analysis"]));
+        console.log("Analysis completed successfully");
+      } else {
+        const errorMessage = data.error || "Analysis failed";
+        setAnalysisError(errorMessage);
+        console.error("Analysis failed:", errorMessage);
+      }
+    } catch (err) {
+      const errorMessage = "Network error occurred. Please check your connection and try again.";
+      setAnalysisError(errorMessage);
+      console.error("Analysis error:", err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [productImage]);
+
+  const handleGenerateContent = useCallback(async () => {
+    if (!competitiveAnalysis) return;
+
+    setIsGenerating(true);
+    setGenerationError(null);
+    setGeneratedContent({ images: [], videos: [] });
+
+    try {
+      // Generate 5 different images based on competitive insights
+      const imagePrompts = [
+        `Create a modern ${competitiveAnalysis.detectedCategory.name} advertisement inspired by ${competitiveAnalysis.insights.topBrands[0]} style with clean minimalist design`,
+        `Design a premium ${competitiveAnalysis.detectedCategory.name} marketing image with luxury aesthetic and professional lighting`,
+        `Generate a dynamic ${competitiveAnalysis.detectedCategory.name} ad with bold colors and contemporary design trends`,
+        `Create a lifestyle-focused ${competitiveAnalysis.detectedCategory.name} advertisement showing product in use`,
+        `Design a competitive ${competitiveAnalysis.detectedCategory.name} ad that stands out from ${competitiveAnalysis.insights.topBrands.slice(0, 2).join(' and ')}`
+      ];
+
+      const videoPrompts = [
+        `Create a 15-second ${competitiveAnalysis.detectedCategory.name} advertisement video with modern motion graphics and dynamic transitions`,
+        `Generate a lifestyle ${competitiveAnalysis.detectedCategory.name} video ad showing the product in action with smooth camera movements`
+      ];
+
+      // Generate images
+      const imagePromises = imagePrompts.map(async (prompt, index) => {
+        const response = await fetch("/api/gemini/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, model: "gemini-2.5-flash-image-preview" }),
+        });
+
+        if (!response.ok) throw new Error(`Image generation failed: ${response.statusText}`);
+        const result = await response.json();
+        
+        return {
+          id: `img-${index + 1}`,
+          url: result.imageUrl,
+          prompt,
+          style: `Style ${index + 1}`
+        };
+      });
+
+      // Generate videos
+      const videoPromises = videoPrompts.map(async (prompt, index) => {
+        const response = await fetch("/api/veo/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+
+        if (!response.ok) throw new Error(`Video generation failed: ${response.statusText}`);
+        const result = await response.json();
+        
+        return {
+          id: `vid-${index + 1}`,
+          url: result.videoUrl,
+          prompt,
+          style: `Video Style ${index + 1}`
+        };
+      });
+
+      const [images, videos] = await Promise.all([
+        Promise.all(imagePromises),
+        Promise.all(videoPromises)
+      ]);
+
+      setGeneratedContent({ images, videos });
+      setCompletedSteps(prev => new Set([...prev, "generation"]));
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Content generation failed";
+      setGenerationError(errorMessage);
+      console.error("Generation error:", err);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [competitiveAnalysis]);
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -435,82 +616,379 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
 
       case "analysis":
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="text-center">
-              <h3 className="text-2xl font-bold text-white mb-4">Market Analysis</h3>
-              <p className="text-gray-400 mb-8">AI is analyzing competitor ads and market trends...</p>
+              <h3 className="text-3xl font-bold bg-gradient-to-r from-[#f5f5f5] to-[#a5a5a5] bg-clip-text text-transparent mb-4">
+                Competitive Analysis
+              </h3>
+              <p className="text-[#a5a5a5] text-lg mb-8">AI analyzes competitor ads, styles, and market trends using Apify data</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-purple-500/20 rounded-lg">
-                    <Target className="w-6 h-6 text-purple-400" />
+            {productImage && productImageUrl ? (
+              <div className="space-y-8">
+                {/* Display the uploaded image */}
+                <div className="flex justify-center">
+                  <div className="relative max-w-lg">
+                    <div className="relative overflow-hidden rounded-2xl shadow-2xl border-2 border-[#7e3ff2]/30">
+                      <img
+                        src={productImageUrl}
+                        alt="Product for analysis"
+                        className="w-full h-80 object-contain bg-[#2a2a2a]/50"
+                      />
+                      <div className="absolute top-4 right-4 bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] text-white px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow-lg">
+                        <Target className="w-4 h-4" />
+                        <span className="font-semibold">Ready for Analysis</span>
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="font-semibold text-white">Competitor Analysis</h4>
                 </div>
-                <p className="text-gray-400 text-sm">Analyzing top competitor ad styles and messaging</p>
-                <div className="mt-4 flex items-center gap-2 text-purple-400">
-                  <div className="w-4 h-4 border-2 border-t-transparent border-purple-400 rounded-full animate-spin" />
-                  <span className="text-sm">In progress...</span>
-                </div>
-              </div>
 
-              <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-pink-500/20 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-pink-400" />
-                  </div>
-                  <h4 className="font-semibold text-white">Trend Analysis</h4>
+                {/* Analysis Button */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={handleCompetitiveAnalysis}
+                    disabled={isAnalyzing || !!competitiveAnalysis}
+                    className={`flex items-center gap-3 px-8 py-4 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg ${
+                      competitiveAnalysis
+                        ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white cursor-not-allowed"
+                        : isAnalyzing
+                        ? "bg-gradient-to-r from-gray-500 to-gray-600 text-white cursor-not-allowed"
+                        : "bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] hover:from-[#5a2db8] hover:to-[#7e3ff2] text-white shadow-xl"
+                    }`}
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="font-semibold text-lg">Analyzing Competition...</span>
+                      </>
+                    ) : competitiveAnalysis ? (
+                      <>
+                        <CheckCircle className="w-6 h-6" />
+                        <span className="font-semibold text-lg">Analysis Complete</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-6 h-6" />
+                        <span className="font-semibold text-lg">Start Competitive Analysis</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <p className="text-gray-400 text-sm">Identifying current market trends and preferences</p>
-                <div className="mt-4 flex items-center gap-2 text-pink-400">
-                  <div className="w-4 h-4 border-2 border-t-transparent border-pink-400 rounded-full animate-spin" />
-                  <span className="text-sm">In progress...</span>
-                </div>
-              </div>
 
-              <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-500/20 rounded-lg">
-                    <Users className="w-6 h-6 text-blue-400" />
+                {/* Error Display */}
+                {analysisError && (
+                  <div className="bg-red-900/50 border border-red-700 rounded-2xl p-6">
+                    <p className="text-red-200">{analysisError}</p>
                   </div>
-                  <h4 className="font-semibold text-white">Audience Insights</h4>
-                </div>
-                <p className="text-gray-400 text-sm">Understanding target audience preferences</p>
-                <div className="mt-4 flex items-center gap-2 text-blue-400">
-                  <div className="w-4 h-4 border-2 border-t-transparent border-blue-400 rounded-full animate-spin" />
-                  <span className="text-sm">In progress...</span>
-                </div>
+                )}
+
+                {/* Analysis Results */}
+                {competitiveAnalysis && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6"
+                  >
+                    {/* Category Detection */}
+                    <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-6">
+                      <h4 className="text-lg font-semibold text-[#f5f5f5] mb-4 flex items-center gap-2">
+                        <Target className="w-5 h-5" />
+                        Product Category Detection
+                      </h4>
+                      <div className="space-y-3">
+                        <p className="text-[#a5a5a5]">
+                          <span className="font-medium">Detected:</span> {competitiveAnalysis.detectedCategory.name}
+                        </p>
+                        <p className="text-[#a5a5a5]">
+                          <span className="font-medium">Confidence:</span>{" "}
+                          <span className={`${
+                            competitiveAnalysis.confidence > 0.7 ? 'text-green-400' : 
+                            competitiveAnalysis.confidence > 0.4 ? 'text-yellow-400' : 
+                            'text-red-400'
+                          }`}>
+                            {(competitiveAnalysis.confidence * 100).toFixed(1)}%
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Market Insights */}
+                    <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-6">
+                      <h4 className="text-lg font-semibold text-[#f5f5f5] mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5" />
+                        Market Insights
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-[#7e3ff2]">
+                            {competitiveAnalysis.insights.totalCompetitorsAnalyzed}
+                          </div>
+                          <div className="text-sm text-[#a5a5a5]">Competitors</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-400">
+                            {competitiveAnalysis.insights.totalAdsScraped}
+                          </div>
+                          <div className="text-sm text-[#a5a5a5]">Ads Analyzed</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-400">
+                            ${competitiveAnalysis.insights.averagePrice.toFixed(0)}
+                          </div>
+                          <div className="text-sm text-[#a5a5a5]">Avg Price</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-yellow-400">
+                            {competitiveAnalysis.insights.topBrands.length}
+                          </div>
+                          <div className="text-sm text-[#a5a5a5]">Top Brands</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Competitor Ads Preview */}
+                    {competitiveAnalysis.scrapedAds && competitiveAnalysis.scrapedAds.length > 0 && (
+                      <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-6">
+                        <h4 className="text-lg font-semibold text-[#f5f5f5] mb-4 flex items-center gap-2">
+                          <Users className="w-5 h-5" />
+                          Competitor Analysis ({competitiveAnalysis.scrapedAds.length} ads found)
+                        </h4>
+                        <div className="space-y-3 max-h-64 overflow-y-auto">
+                          {competitiveAnalysis.scrapedAds.slice(0, 5).map((ad, index) => (
+                            <div key={ad.id} className="bg-[#2a2a2a]/50 rounded-lg p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="w-12 h-12 bg-[#7e3ff2]/20 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs font-bold text-[#7e3ff2]">
+                                    {ad.brand.charAt(0)}
+                                  </span>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <h5 className="font-medium text-[#f5f5f5]">{ad.title}</h5>
+                                    {ad.price && (
+                                      <span className="text-green-400 font-semibold text-sm">{ad.price}</span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-[#a5a5a5] mt-1">{ad.description}</p>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className="text-xs bg-[#7e3ff2]/20 text-[#7e3ff2] px-2 py-1 rounded">
+                                      {ad.brand}
+                                    </span>
+                                    {ad.platform && (
+                                      <span className="text-xs bg-blue-600/20 text-blue-300 px-2 py-1 rounded">
+                                        {ad.platform}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="p-6 bg-gradient-to-r from-slate-700/50 to-slate-800/50 rounded-3xl w-24 h-24 mx-auto mb-6 flex items-center justify-center shadow-lg">
+                  <Upload className="w-12 h-12 text-slate-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">No Product Image Found</h3>
+                <p className="text-slate-400 text-lg mb-8">Please go back to Step 1 and upload a product image first</p>
+                <button
+                  onClick={() => setCurrentStep("upload")}
+                  className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 text-white rounded-xl transition-all duration-300 mx-auto shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span className="font-semibold">Back to Upload</span>
+                </button>
+              </div>
+            )}
           </div>
         );
 
       case "generation":
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="text-center">
-              <h3 className="text-2xl font-bold text-white mb-4">Ad Creative Generation</h3>
-              <p className="text-gray-400 mb-8">Generating ad banners and posters with your product</p>
+              <h3 className="text-3xl font-bold bg-gradient-to-r from-[#f5f5f5] to-[#a5a5a5] bg-clip-text text-transparent mb-4">
+                Ad Creative Generation
+              </h3>
+              <p className="text-[#a5a5a5] text-lg mb-8">Generate 5 different images and 2 ad videos based on competitive insights</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
-                  <div className="aspect-video bg-gray-700/50 rounded-lg mb-4 flex items-center justify-center">
+            {competitiveAnalysis ? (
+              <div className="space-y-8">
+                {/* Generate Button */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={handleGenerateContent}
+                    disabled={isGenerating || generatedContent.images.length > 0}
+                    className={`flex items-center gap-3 px-8 py-4 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg ${
+                      generatedContent.images.length > 0
+                        ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white cursor-not-allowed"
+                        : isGenerating
+                        ? "bg-gradient-to-r from-gray-500 to-gray-600 text-white cursor-not-allowed"
+                        : "bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] hover:from-[#5a2db8] hover:to-[#7e3ff2] text-white shadow-xl"
+                    }`}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="font-semibold text-lg">Generating Content...</span>
+                      </>
+                    ) : generatedContent.images.length > 0 ? (
+                      <>
+                        <CheckCircle className="w-6 h-6" />
+                        <span className="font-semibold text-lg">Content Generated</span>
+                      </>
+                    ) : (
+                      <>
+                        <Palette className="w-6 h-6" />
+                        <span className="font-semibold text-lg">Generate 5 Images + 2 Videos</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Error Display */}
+                {generationError && (
+                  <div className="bg-red-900/50 border border-red-700 rounded-2xl p-6">
+                    <p className="text-red-200">{generationError}</p>
+                  </div>
+                )}
+
+                {/* Generated Images */}
+                {generatedContent.images.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6"
+                  >
+                    <h4 className="text-2xl font-bold text-[#f5f5f5] flex items-center gap-2">
+                      <ImageIcon className="w-6 h-6" />
+                      Generated Images (5)
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {generatedContent.images.map((image, index) => (
+                        <div key={image.id} className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-4 hover:border-[#7e3ff2]/50 transition-all duration-300">
+                          <div className="aspect-video bg-[#2a2a2a]/50 rounded-lg mb-4 overflow-hidden">
+                            <img
+                              src={image.url}
+                              alt={`Generated image ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <h5 className="font-semibold text-[#f5f5f5]">{image.style}</h5>
+                            <p className="text-sm text-[#a5a5a5] line-clamp-2">{image.prompt}</p>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = image.url;
+                                link.download = `ad-image-${index + 1}.png`;
+                                link.click();
+                              }}
+                              className="w-full bg-[#7e3ff2]/20 hover:bg-[#7e3ff2]/30 text-[#7e3ff2] py-2 px-4 rounded-lg transition-colors text-sm font-medium"
+                            >
+                              Download
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Generated Videos */}
+                {generatedContent.videos.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6"
+                  >
+                    <h4 className="text-2xl font-bold text-[#f5f5f5] flex items-center gap-2">
+                      <Play className="w-6 h-6" />
+                      Generated Videos (2)
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {generatedContent.videos.map((video, index) => (
+                        <div key={video.id} className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-4 hover:border-[#7e3ff2]/50 transition-all duration-300">
+                          <div className="aspect-video bg-[#2a2a2a]/50 rounded-lg mb-4 overflow-hidden">
+                            <video
+                              src={video.url}
+                              controls
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <h5 className="font-semibold text-[#f5f5f5]">{video.style}</h5>
+                            <p className="text-sm text-[#a5a5a5] line-clamp-2">{video.prompt}</p>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = video.url;
+                                link.download = `ad-video-${index + 1}.mp4`;
+                                link.click();
+                              }}
+                              className="w-full bg-[#7e3ff2]/20 hover:bg-[#7e3ff2]/30 text-[#7e3ff2] py-2 px-4 rounded-lg transition-colors text-sm font-medium"
+                            >
+                              Download
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Loading State */}
+                {isGenerating && (
+                  <div className="space-y-6">
                     <div className="text-center">
-                      <div className="w-8 h-8 border-2 border-t-transparent border-green-400 rounded-full animate-spin mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm">Generating...</p>
+                      <div className="w-16 h-16 border-4 border-[#7e3ff2]/30 border-t-[#7e3ff2] rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-[#a5a5a5] text-lg">Generating your ad creatives...</p>
+                      <p className="text-[#a5a5a5] text-sm">This may take a few minutes</p>
+                    </div>
+                    
+                    {/* Loading Placeholders */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-4">
+                          <div className="aspect-video bg-[#2a2a2a]/50 rounded-lg mb-4 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-8 h-8 border-2 border-t-transparent border-[#7e3ff2] rounded-full animate-spin mx-auto mb-2" />
+                              <p className="text-[#a5a5a5] text-sm">Generating...</p>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[#f5f5f5] font-medium">Image {i}</p>
+                            <p className="text-[#a5a5a5] text-sm">Based on competitive insights</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-white font-medium">Ad Variant {i}</p>
-                    <p className="text-gray-400 text-sm">Modern Style</p>
-                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="p-6 bg-gradient-to-r from-slate-700/50 to-slate-800/50 rounded-3xl w-24 h-24 mx-auto mb-6 flex items-center justify-center shadow-lg">
+                  <Search className="w-12 h-12 text-slate-400" />
                 </div>
-              ))}
-            </div>
+                <h3 className="text-2xl font-bold text-white mb-4">Competitive Analysis Required</h3>
+                <p className="text-slate-400 text-lg mb-8">Please complete the competitive analysis first to generate content</p>
+                <button
+                  onClick={() => setCurrentStep("analysis")}
+                  className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 text-white rounded-xl transition-all duration-300 mx-auto shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span className="font-semibold">Back to Analysis</span>
+                </button>
+              </div>
+            )}
           </div>
         );
 

@@ -125,7 +125,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
     } finally {
       setIsDetecting(false);
     }
-  }, [imageFile, onCategoryDetected]);
+  }, [imageFile, onCategoryDetected, setDetectedCategory]);
 
   const reset = useCallback(() => {
     setImageFile(null);
@@ -135,7 +135,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
     }
     setDetectedCategory(null);
     setError(null);
-  }, [imageUrl]);
+  }, [imageUrl, setDetectedCategory]);
 
   return (
     <div className="w-full max-w-2xl mx-auto relative z-10">

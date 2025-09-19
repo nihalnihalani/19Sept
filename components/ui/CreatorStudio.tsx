@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Palette,
@@ -10,8 +10,12 @@ import {
   ArrowLeft,
   Sparkles,
   Target,
-  Eye
+  Eye,
+  RotateCcw,
+  Download
 } from "lucide-react";
+import Composer from "./Composer";
+import ModelSelector from "./ModelSelector";
 
 interface CreatorStudioProps {
   onSwitchToCampaign: () => void;
@@ -27,6 +31,169 @@ type StudioMode =
 
 const CreatorStudio: React.FC<CreatorStudioProps> = ({ onSwitchToCampaign }) => {
   const [mode, setMode] = useState<StudioMode>("create-image");
+  
+  // State management for all creator tools
+  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash-image-preview");
+  const [prompt, setPrompt] = useState("");
+  const [imagePrompt, setImagePrompt] = useState("");
+  const [editPrompt, setEditPrompt] = useState("");
+  const [composePrompt, setComposePrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [geminiBusy, setGeminiBusy] = useState(false);
+
+  // Update selected model when mode changes
+  useEffect(() => {
+    if (mode === "create-video") {
+      setSelectedModel("veo-3.0-generate-001");
+    } else if (mode === "edit-image" || mode === "compose-image") {
+      setSelectedModel("gemini-2.5-flash-image-preview");
+    } else {
+      setSelectedModel("gemini-2.5-flash-image-preview");
+    }
+  }, [mode]);
+
+  const getCurrentPrompt = () => {
+    switch (mode) {
+      case "create-image":
+        return imagePrompt;
+      case "edit-image":
+        return editPrompt;
+      case "compose-image":
+        return composePrompt;
+      case "create-video":
+        return prompt;
+      default:
+        return prompt;
+    }
+  };
+
+  const setCurrentPrompt = (value: string) => {
+    switch (mode) {
+      case "create-image":
+        setImagePrompt(value);
+        break;
+      case "edit-image":
+        setEditPrompt(value);
+        break;
+      case "compose-image":
+        setComposePrompt(value);
+        break;
+      case "create-video":
+        setPrompt(value);
+        break;
+      default:
+        setPrompt(value);
+    }
+  };
+
+  const canStart = useCallback(() => {
+    const currentPrompt = getCurrentPrompt();
+    if (!currentPrompt.trim()) return false;
+    
+    if (mode === "edit-image" || mode === "compose-image") {
+      return uploadedImage !== null;
+    }
+    
+    return true;
+  }, [mode, getCurrentPrompt, uploadedImage]);
+
+  const startGeneration = useCallback(async () => {
+    if (!canStart() || isGenerating) return;
+
+    setIsGenerating(true);
+    setGeminiBusy(true);
+
+    try {
+      const currentPrompt = getCurrentPrompt();
+      
+      if (mode === "create-video") {
+        // Video generation logic
+        const formData = new FormData();
+        formData.append('prompt', currentPrompt);
+        if (uploadedImage) {
+          formData.append('image', uploadedImage);
+        }
+
+        const response = await fetch('/api/veo/generate', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Video generation failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        setVideoUrl(result.videoUrl);
+      } else {
+        // Image generation logic
+        const formData = new FormData();
+        formData.append('prompt', currentPrompt);
+        formData.append('model', selectedModel);
+        
+        if (uploadedImage && (mode === "edit-image" || mode === "compose-image")) {
+          formData.append('image', uploadedImage);
+        }
+
+        const response = await fetch('/api/gemini/generate', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Image generation failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        setGeneratedImageUrl(result.imageUrl);
+      }
+    } catch (error) {
+      console.error('Generation error:', error);
+      alert(`Generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsGenerating(false);
+      setGeminiBusy(false);
+    }
+  }, [mode, canStart, isGenerating, getCurrentPrompt, selectedModel, uploadedImage]);
+
+  const resetAll = useCallback(() => {
+    setPrompt("");
+    setImagePrompt("");
+    setEditPrompt("");
+    setComposePrompt("");
+    setGeneratedImageUrl(null);
+    setVideoUrl(null);
+    setUploadedImage(null);
+    if (uploadedImageUrl) {
+      URL.revokeObjectURL(uploadedImageUrl);
+      setUploadedImageUrl(null);
+    }
+    setIsGenerating(false);
+    setGeminiBusy(false);
+  }, [uploadedImageUrl]);
+
+  const downloadImage = useCallback(() => {
+    if (generatedImageUrl) {
+      const link = document.createElement('a');
+      link.href = generatedImageUrl;
+      link.download = `alchemy-studio-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }, [generatedImageUrl]);
+
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedImage(file);
+      setUploadedImageUrl(URL.createObjectURL(file));
+    }
+  }, []);
 
   const getTabText = (mode: StudioMode) => {
     switch (mode) {
@@ -67,37 +234,120 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({ onSwitchToCampaign }) => 
   };
 
   const renderModeContent = () => {
+    // For category detection, show a special component
+    if (mode === "category-detection") {
+      return (
+        <div className="text-center py-16">
+          <div className="p-6 bg-gradient-to-r from-[#7e3ff2]/20 to-[#5a2db8]/20 rounded-3xl w-24 h-24 mx-auto mb-6 flex items-center justify-center shadow-lg">
+            <Eye className="w-12 h-12 text-[#7e3ff2]" />
+          </div>
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-[#f5f5f5] to-[#a5a5a5] bg-clip-text text-transparent mb-4">
+            Category Detection
+          </h3>
+          <p className="text-[#a5a5a5] text-lg mb-8">AI-powered product category detection</p>
+          <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-8 max-w-md mx-auto">
+            <p className="text-[#a5a5a5] mb-4">This tool is available in the Campaign Workflow for integrated product analysis.</p>
+            <button
+              onClick={onSwitchToCampaign}
+              className="mt-4 px-6 py-3 bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] text-white rounded-xl hover:from-[#6d2ee6] hover:to-[#4a1f9a] transition-all duration-300"
+            >
+              Go to Campaign Workflow
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // For product gallery, show generated content
+    if (mode === "product-gallery") {
+      return (
+        <div className="space-y-6">
+          <div className="text-center">
+            <h3 className="text-2xl font-bold text-[#f5f5f5] mb-2">Your Creations</h3>
+            <p className="text-[#a5a5a5]">Browse and manage your generated content</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {generatedImageUrl && (
+              <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-4">
+                <img
+                  src={generatedImageUrl}
+                  alt="Generated content"
+                  className="w-full h-48 object-cover rounded-xl mb-4"
+                />
+                <div className="flex justify-between items-center">
+                  <span className="text-[#f5f5f5] font-medium">Generated Image</span>
+                  <button
+                    onClick={downloadImage}
+                    className="p-2 bg-[#7e3ff2]/20 hover:bg-[#7e3ff2]/30 rounded-lg transition-colors"
+                  >
+                    <Download className="w-4 h-4 text-[#7e3ff2]" />
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {videoUrl && (
+              <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-4">
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full h-48 object-cover rounded-xl mb-4"
+                />
+                <div className="flex justify-between items-center">
+                  <span className="text-[#f5f5f5] font-medium">Generated Video</span>
+                  <button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = videoUrl;
+                      link.download = `alchemy-studio-video-${Date.now()}.mp4`;
+                      link.click();
+                    }}
+                    className="p-2 bg-[#7e3ff2]/20 hover:bg-[#7e3ff2]/30 rounded-lg transition-colors"
+                  >
+                    <Download className="w-4 h-4 text-[#7e3ff2]" />
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {!generatedImageUrl && !videoUrl && (
+              <div className="col-span-full text-center py-12">
+                <div className="p-4 bg-[#2a2a2a]/30 rounded-2xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <ImageIcon className="w-8 h-8 text-[#a5a5a5]" />
+                </div>
+                <p className="text-[#a5a5a5]">No content generated yet. Create some images or videos to see them here!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // For all other modes, use the Composer component
     return (
-      <div className="text-center py-16">
-        <div className="p-6 bg-gradient-to-r from-[#7e3ff2]/20 to-[#5a2db8]/20 rounded-3xl w-24 h-24 mx-auto mb-6 flex items-center justify-center shadow-lg">
-          {React.createElement(getTabIcon(mode), { className: "w-12 h-12 text-[#7e3ff2]" })}
-        </div>
-        <h3 className="text-3xl font-bold bg-gradient-to-r from-[#f5f5f5] to-[#a5a5a5] bg-clip-text text-transparent mb-4">
-          {getTabText(mode)}
-        </h3>
-        <p className="text-[#a5a5a5] text-lg mb-8">Professional creative tool for content creation</p>
-        <div className="bg-[#2a2a2a]/30 border border-[#2a2a2a]/50 rounded-2xl p-8 max-w-md mx-auto">
-          <p className="text-[#a5a5a5] mb-4">This creative tool provides advanced AI-powered capabilities for:</p>
-          <ul className="text-left text-[#a5a5a5] space-y-2">
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#7e3ff2] rounded-full"></div>
-              High-quality content generation
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#7e3ff2] rounded-full"></div>
-              Professional editing tools
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#7e3ff2] rounded-full"></div>
-              AI-powered enhancements
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#7e3ff2] rounded-full"></div>
-              Export in multiple formats
-            </li>
-          </ul>
-        </div>
-      </div>
+      <Composer
+        mode={mode}
+        setMode={setMode}
+        hasGeneratedImage={!!generatedImageUrl}
+        hasVideoUrl={!!videoUrl}
+        prompt={prompt}
+        setPrompt={setPrompt}
+        selectedModel={selectedModel}
+        setSelectedModel={setSelectedModel}
+        canStart={canStart()}
+        isGenerating={isGenerating}
+        startGeneration={startGeneration}
+        imagePrompt={imagePrompt}
+        setImagePrompt={setImagePrompt}
+        editPrompt={editPrompt}
+        setEditPrompt={setEditPrompt}
+        composePrompt={composePrompt}
+        setComposePrompt={setComposePrompt}
+        geminiBusy={geminiBusy}
+        resetAll={resetAll}
+        downloadImage={downloadImage}
+      />
     );
   };
 

@@ -13,16 +13,14 @@ import {
   Download,
   RotateCcw,
   Play,
+  ZoomIn,
+  ZoomOut,
   Maximize2,
   X,
   CheckCircle,
   AlertCircle,
-  Loader2,
-  Settings,
-  ChevronDown,
-  ChevronRight
+  Loader2
 } from "lucide-react";
-import ModelSelector from "./ModelSelector";
 
 type StudioMode =
   | "create-image"
@@ -32,7 +30,7 @@ type StudioMode =
   | "product-gallery"
   | "category-detection";
 
-interface CreatorStudioProps {
+interface CreatorStudioWorkspaceProps {
   onSwitchToCampaign: () => void;
   activeMode: StudioMode;
   setActiveMode: (mode: StudioMode) => void;
@@ -62,7 +60,7 @@ interface CreatorStudioProps {
   setError: (error: string | null) => void;
 }
 
-const CreatorStudio: React.FC<CreatorStudioProps> = ({ 
+const CreatorStudioWorkspace: React.FC<CreatorStudioWorkspaceProps> = ({ 
   onSwitchToCampaign,
   activeMode,
   setActiveMode,
@@ -92,138 +90,6 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
   setError
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  // Update selected model when mode changes
-  useEffect(() => {
-    if (activeMode === "create-video") {
-      setSelectedModel("veo-3.0-generate-001");
-    } else if (activeMode === "edit-image" || activeMode === "compose-image") {
-      setSelectedModel("gemini-2.5-flash-image-preview");
-    } else {
-      setSelectedModel("gemini-2.5-flash-image-preview");
-    }
-  }, [activeMode, setSelectedModel]);
-
-  const getCurrentPrompt = () => {
-    switch (activeMode) {
-      case "create-image":
-        return imagePrompt;
-      case "edit-image":
-        return editPrompt;
-      case "compose-image":
-        return composePrompt;
-      case "create-video":
-        return prompt;
-      default:
-        return prompt;
-    }
-  };
-
-  const setCurrentPrompt = (value: string) => {
-    switch (activeMode) {
-      case "create-image":
-        setImagePrompt(value);
-        break;
-      case "edit-image":
-        setEditPrompt(value);
-        break;
-      case "compose-image":
-        setComposePrompt(value);
-        break;
-      case "create-video":
-        setPrompt(value);
-        break;
-      default:
-        setPrompt(value);
-    }
-  };
-
-  const canStart = useCallback(() => {
-    const currentPrompt = getCurrentPrompt();
-    if (!currentPrompt.trim()) return false;
-    
-    if (activeMode === "edit-image" || activeMode === "compose-image") {
-      return uploadedImage !== null;
-    }
-    
-    return true;
-  }, [activeMode, getCurrentPrompt, uploadedImage]);
-
-  const startGeneration = useCallback(async () => {
-    if (!canStart() || isGenerating) return;
-
-    setIsGenerating(true);
-    setGeminiBusy(true);
-    setError(null);
-
-    try {
-      const currentPrompt = getCurrentPrompt();
-      
-      if (activeMode === "create-video") {
-        const formData = new FormData();
-        formData.append('prompt', currentPrompt);
-        if (uploadedImage) {
-          formData.append('image', uploadedImage);
-        }
-
-        const response = await fetch('/api/veo/generate', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Video generation failed: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        setVideoUrl(result.videoUrl);
-      } else {
-        const formData = new FormData();
-        formData.append('prompt', currentPrompt);
-        formData.append('model', selectedModel);
-        
-        if (uploadedImage && (activeMode === "edit-image" || activeMode === "compose-image")) {
-          formData.append('image', uploadedImage);
-        }
-
-        const response = await fetch('/api/gemini/generate', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Image generation failed: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        setGeneratedImageUrl(result.imageUrl);
-      }
-    } catch (error) {
-      console.error('Generation error:', error);
-      setError(error instanceof Error ? error.message : 'Unknown error occurred');
-    } finally {
-      setIsGenerating(false);
-      setGeminiBusy(false);
-    }
-  }, [activeMode, canStart, isGenerating, getCurrentPrompt, selectedModel, uploadedImage, setIsGenerating, setGeminiBusy, setError, setVideoUrl, setGeneratedImageUrl]);
-
-  const resetAll = useCallback(() => {
-    setPrompt("");
-    setImagePrompt("");
-    setEditPrompt("");
-    setComposePrompt("");
-    setGeneratedImageUrl(null);
-    setVideoUrl(null);
-    setUploadedImage(null);
-    if (uploadedImageUrl) {
-      URL.revokeObjectURL(uploadedImageUrl);
-      setUploadedImageUrl(null);
-    }
-    setIsGenerating(false);
-    setGeminiBusy(false);
-    setError(null);
-  }, [setPrompt, setImagePrompt, setEditPrompt, setComposePrompt, setGeneratedImageUrl, setVideoUrl, setUploadedImage, uploadedImageUrl, setUploadedImageUrl, setIsGenerating, setGeminiBusy, setError]);
 
   const downloadImage = useCallback(() => {
     if (generatedImageUrl) {
@@ -282,51 +148,6 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
         return "Professional AI-powered creative tools";
     }
   };
-
-  const tools = [
-    { 
-      id: "create-image" as StudioMode, 
-      label: "Create Image", 
-      icon: ImageIcon, 
-      color: "from-blue-500 to-cyan-500",
-      description: "Generate images from text prompts"
-    },
-    { 
-      id: "edit-image" as StudioMode, 
-      label: "Edit Image", 
-      icon: Upload, 
-      color: "from-green-500 to-emerald-500",
-      description: "AI-powered image editing"
-    },
-    { 
-      id: "compose-image" as StudioMode, 
-      label: "Compose", 
-      icon: Palette, 
-      color: "from-purple-500 to-pink-500",
-      description: "Multi-image composition"
-    },
-    { 
-      id: "create-video" as StudioMode, 
-      label: "Create Video", 
-      icon: Film, 
-      color: "from-orange-500 to-red-500",
-      description: "Generate videos from prompts"
-    },
-    { 
-      id: "product-gallery" as StudioMode, 
-      label: "Gallery", 
-      icon: Target, 
-      color: "from-teal-500 to-blue-500",
-      description: "Browse your creations"
-    },
-    { 
-      id: "category-detection" as StudioMode, 
-      label: "Category", 
-      icon: Eye, 
-      color: "from-pink-500 to-purple-500",
-      description: "Product category detection"
-    }
-  ];
 
   const renderContent = () => {
     if (activeMode === "product-gallery") {
@@ -571,142 +392,8 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#121212] flex">
-      {/* Sidebar */}
-      <div className={`bg-[#121212]/60 backdrop-blur-xl border-r border-[#2a2a2a]/30 flex-shrink-0 transition-all duration-300 ${
-        sidebarCollapsed ? 'w-20' : 'w-80'
-      }`}>
-        <div className="h-full flex flex-col">
-          {/* Header */}
-          <div className="p-4 border-b border-[#2a2a2a]/30">
-            <div className="flex items-center justify-between mb-4">
-              {!sidebarCollapsed && (
-                <h2 className="text-lg font-semibold text-[#f5f5f5]">Creator Tools</h2>
-              )}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 text-[#a5a5a5] hover:text-[#f5f5f5] hover:bg-[#2a2a2a]/30 rounded-xl transition-all duration-300"
-              >
-                {sidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-              </button>
-            </div>
-
-            {/* Tool Selection */}
-            {!sidebarCollapsed && (
-              <div className="grid grid-cols-2 gap-2">
-                {tools.map((tool) => {
-                  const Icon = tool.icon;
-                  return (
-                    <motion.button
-                      key={tool.id}
-                      onClick={() => setActiveMode(tool.id)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`p-3 rounded-xl transition-all duration-300 ${
-                        activeMode === tool.id
-                          ? `bg-gradient-to-r ${tool.color} text-white shadow-lg`
-                          : "bg-[#2a2a2a]/30 text-[#a5a5a5] hover:bg-[#2a2a2a]/50 hover:text-[#f5f5f5]"
-                      }`}
-                    >
-                      <Icon className="w-5 h-5 mx-auto mb-1" />
-                      <span className="text-xs font-medium block text-center">{tool.label}</span>
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Collapsed Tool Icons */}
-            {sidebarCollapsed && (
-              <div className="space-y-2">
-                {tools.map((tool) => {
-                  const Icon = tool.icon;
-                  return (
-                    <motion.button
-                      key={tool.id}
-                      onClick={() => setActiveMode(tool.id)}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`w-full p-3 rounded-xl transition-all duration-300 ${
-                        activeMode === tool.id
-                          ? `bg-gradient-to-r ${tool.color} text-white shadow-lg`
-                          : "bg-[#2a2a2a]/30 text-[#a5a5a5] hover:bg-[#2a2a2a]/50 hover:text-[#f5f5f5]"
-                      }`}
-                      title={tool.label}
-                    >
-                      <Icon className="w-5 h-5 mx-auto" />
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Controls */}
-          {!sidebarCollapsed && (
-            <div className="flex-1 p-4 overflow-y-auto">
-              <div className="space-y-4">
-                {/* Model Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-[#f5f5f5] mb-2">Model</label>
-                  <ModelSelector
-                    selectedModel={selectedModel}
-                    setSelectedModel={setSelectedModel}
-                    mode={activeMode}
-                  />
-                </div>
-
-                {/* Prompt Input */}
-                <div>
-                  <label className="block text-sm font-medium text-[#f5f5f5] mb-2">Prompt</label>
-                  <textarea
-                    value={getCurrentPrompt()}
-                    onChange={(e) => setCurrentPrompt(e.target.value)}
-                    placeholder={`Enter your ${activeMode.replace('-', ' ')} prompt...`}
-                    className="w-full p-3 bg-[#2a2a2a]/50 border border-[#2a2a2a]/50 rounded-lg text-[#f5f5f5] placeholder-[#a5a5a5] focus:border-[#7e3ff2]/50 focus:outline-none resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={startGeneration}
-                    disabled={!canStart() || isGenerating}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-                      canStart() && !isGenerating
-                        ? "bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] hover:from-[#6d2ee6] hover:to-[#4a1f9a] text-white"
-                        : "bg-[#2a2a2a]/50 text-[#666] cursor-not-allowed"
-                    }`}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span className="text-sm">Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4" />
-                        <span className="text-sm">Generate</span>
-                      </>
-                    )}
-                  </button>
-                  
-                  <button
-                    onClick={resetAll}
-                    className="p-2 bg-[#2a2a2a]/50 hover:bg-[#2a2a2a]/70 text-[#a5a5a5] hover:text-[#f5f5f5] rounded-lg transition-colors"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#121212]">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
           <motion.div
@@ -721,7 +408,7 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
           </motion.div>
         </div>
 
-        {/* Content Area */}
+        {/* Main Content */}
         <div className="bg-[#121212]/40 backdrop-blur-xl rounded-3xl border border-[#2a2a2a]/30 p-8 shadow-2xl">
           <AnimatePresence mode="wait">
             <motion.div
@@ -784,4 +471,4 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({
   );
 };
 
-export default CreatorStudio;
+export default CreatorStudioWorkspace;

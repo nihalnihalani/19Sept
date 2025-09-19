@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import CampaignWorkflow from "@/components/ui/CampaignWorkflow";
 import CreatorStudio from "@/components/ui/CreatorStudio";
-import CreatorStudioSidebar from "@/components/ui/CreatorStudioSidebar";
 
 type AppMode = "campaign" | "creator";
 
@@ -22,6 +21,21 @@ const AlchemyStudio: React.FC = () => {
   const [appMode, setAppMode] = useState<AppMode>("campaign");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  
+  // Shared state for Creator Studio
+  const [activeMode, setActiveMode] = useState<"create-image" | "edit-image" | "compose-image" | "create-video" | "product-gallery" | "category-detection">("create-image");
+  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash-image-preview");
+  const [prompt, setPrompt] = useState("");
+  const [imagePrompt, setImagePrompt] = useState("");
+  const [editPrompt, setEditPrompt] = useState("");
+  const [composePrompt, setComposePrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [geminiBusy, setGeminiBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSwitchToCreator = () => {
     setAppMode("creator");
@@ -116,23 +130,6 @@ const AlchemyStudio: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex pt-20">
-        {/* Sidebar (Creator Studio Tools) */}
-        <AnimatePresence>
-          {appMode === "creator" && (
-            <motion.aside
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: sidebarCollapsed ? 80 : 320, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="bg-[#121212]/60 backdrop-blur-xl border-r border-[#2a2a2a]/30 flex-shrink-0"
-            >
-              <CreatorStudioSidebar 
-                collapsed={sidebarCollapsed}
-                onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-              />
-            </motion.aside>
-          )}
-        </AnimatePresence>
 
         {/* Main Workspace */}
         <main className="flex-1 min-h-screen">
@@ -140,7 +137,35 @@ const AlchemyStudio: React.FC = () => {
             {appMode === "campaign" ? (
               <CampaignWorkflow onSwitchToCreator={handleSwitchToCreator} />
             ) : (
-              <CreatorStudio onSwitchToCampaign={handleSwitchToCampaign} />
+              <CreatorStudio 
+                onSwitchToCampaign={handleSwitchToCampaign}
+                activeMode={activeMode}
+                setActiveMode={setActiveMode}
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+          prompt={prompt}
+          setPrompt={setPrompt}
+          imagePrompt={imagePrompt}
+          setImagePrompt={setImagePrompt}
+          editPrompt={editPrompt}
+          setEditPrompt={setEditPrompt}
+          composePrompt={composePrompt}
+          setComposePrompt={setComposePrompt}
+                isGenerating={isGenerating}
+                setIsGenerating={setIsGenerating}
+                generatedImageUrl={generatedImageUrl}
+                setGeneratedImageUrl={setGeneratedImageUrl}
+                videoUrl={videoUrl}
+                setVideoUrl={setVideoUrl}
+                uploadedImage={uploadedImage}
+                setUploadedImage={setUploadedImage}
+                uploadedImageUrl={uploadedImageUrl}
+                setUploadedImageUrl={setUploadedImageUrl}
+          geminiBusy={geminiBusy}
+                setGeminiBusy={setGeminiBusy}
+                error={error}
+                setError={setError}
+        />
             )}
           </AnimatePresence>
         </main>

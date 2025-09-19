@@ -22,11 +22,6 @@ import {
 } from "lucide-react";
 import ModelSelector from "./ModelSelector";
 
-interface CreatorStudioSidebarProps {
-  collapsed: boolean;
-  onToggleCollapse: () => void;
-}
-
 type StudioMode =
   | "create-image"
   | "edit-image"
@@ -35,25 +30,68 @@ type StudioMode =
   | "product-gallery"
   | "category-detection";
 
+interface CreatorStudioSidebarProps {
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+  activeMode: StudioMode;
+  setActiveMode: (mode: StudioMode) => void;
+  selectedModel: string;
+  setSelectedModel: (model: string) => void;
+  prompt: string;
+  setPrompt: (prompt: string) => void;
+  imagePrompt: string;
+  setImagePrompt: (prompt: string) => void;
+  editPrompt: string;
+  setEditPrompt: (prompt: string) => void;
+  composePrompt: string;
+  setComposePrompt: (prompt: string) => void;
+  isGenerating: boolean;
+  setIsGenerating: (generating: boolean) => void;
+  generatedImageUrl: string | null;
+  setGeneratedImageUrl: (url: string | null) => void;
+  videoUrl: string | null;
+  setVideoUrl: (url: string | null) => void;
+  uploadedImage: File | null;
+  setUploadedImage: (file: File | null) => void;
+  uploadedImageUrl: string | null;
+  setUploadedImageUrl: (url: string | null) => void;
+  geminiBusy: boolean;
+  setGeminiBusy: (busy: boolean) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
+}
+
 const CreatorStudioSidebar: React.FC<CreatorStudioSidebarProps> = ({ 
   collapsed, 
-  onToggleCollapse 
+  onToggleCollapse,
+  activeMode,
+  setActiveMode,
+  selectedModel,
+  setSelectedModel,
+  prompt,
+  setPrompt,
+  imagePrompt,
+  setImagePrompt,
+  editPrompt,
+  setEditPrompt,
+  composePrompt,
+  setComposePrompt,
+  isGenerating,
+  setIsGenerating,
+  generatedImageUrl,
+  setGeneratedImageUrl,
+  videoUrl,
+  setVideoUrl,
+  uploadedImage,
+  setUploadedImage,
+  uploadedImageUrl,
+  setUploadedImageUrl,
+  geminiBusy,
+  setGeminiBusy,
+  error,
+  setError
 }) => {
-  const [activeMode, setActiveMode] = useState<StudioMode>("create-image");
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["tools"]));
-  
-  // State management for all creator tools
-  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash-image-preview");
-  const [prompt, setPrompt] = useState("");
-  const [imagePrompt, setImagePrompt] = useState("");
-  const [editPrompt, setEditPrompt] = useState("");
-  const [composePrompt, setComposePrompt] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [geminiBusy, setGeminiBusy] = useState(false);
 
   // Update selected model when mode changes
   useEffect(() => {

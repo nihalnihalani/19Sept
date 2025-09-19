@@ -107,6 +107,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
         throw new Error(result.error);
       }
       
+      console.log('Category detection result:', result);
       setDetectedCategory(result.category);
       onCategoryDetected?.(result.category);
     } catch (err) {
@@ -184,12 +185,23 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
               <button
                 onClick={detectCategory}
                 disabled={isDetecting}
-                className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg transition-colors"
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-colors ${
+                  detectedCategory 
+                    ? "bg-green-600 hover:bg-green-700 text-white" 
+                    : isDetecting 
+                    ? "bg-gray-600 cursor-not-allowed text-white" 
+                    : "bg-purple-600 hover:bg-purple-700 text-white"
+                }`}
               >
                 {isDetecting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
                     <span>Detecting...</span>
+                  </>
+                ) : detectedCategory ? (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Detect Again</span>
                   </>
                 ) : (
                   <>
@@ -214,25 +226,36 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
 
               {detectedCategory && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg"
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/40 rounded-xl shadow-lg"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">
-                      {CATEGORY_EMOJIS[detectedCategory]}
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl animate-bounce">
+                      {CATEGORY_EMOJIS[detectedCategory] || "📦"}
                     </div>
-                    <div>
-                      <div className="font-medium text-green-300">
-                        {CATEGORY_LABELS[detectedCategory]}
+                    <div className="flex-1">
+                      <div className="text-lg font-bold text-green-200 mb-1">
+                        {CATEGORY_LABELS[detectedCategory] || "Unknown Category"}
                       </div>
-                      <div className="text-sm text-green-400 opacity-80">
-                        Category detected successfully
+                      <div className="text-sm text-green-300 opacity-90">
+                        ✅ Category detected successfully
                       </div>
                     </div>
-                    <div className="ml-auto">
-                      <Sparkles className="w-5 h-5 text-green-400" />
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-6 h-6 text-green-400 animate-pulse" />
+                      <div className="text-xs text-green-400 font-medium">
+                        AI Powered
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Debug info - remove this in production */}
+                  <div className="mt-3 pt-3 border-t border-green-400/20">
+                    <div className="text-xs text-green-400/70">
+                      Raw category: <code className="bg-green-500/20 px-1 rounded">{detectedCategory}</code>
                     </div>
                   </div>
                 </motion.div>
@@ -254,3 +277,4 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
 };
 
 export default ProductCategoryDetector;
+

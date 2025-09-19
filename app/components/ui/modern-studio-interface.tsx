@@ -92,7 +92,8 @@ export function ModernStudioInterface({
   const hasLastImage = mounted && !!studio.state.lastImage?.url;
   const lastImageUrl = mounted ? studio.state.lastImage?.url : undefined;
   const prefillOnceRef = React.useRef<string | null>(null);
-  const hasCulture = mounted && !!studio.state.culturalContext;
+  // Cultural context has been removed
+  const hasCulture = false;
 
   // Simulate progress during generation
   React.useEffect(() => {
@@ -487,9 +488,14 @@ function EmptyState({
                 <Upload className="h-8 w-8 text-muted-foreground" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">Upload an image to edit</h3>
+                <h3 className="text-lg font-medium">
+                  {mode === 'compose-image' ? 'Upload images to compose' : 'Upload an image to edit'}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Drag and drop an image here, or click to browse
+                  {mode === 'compose-image' 
+                    ? 'Drag and drop multiple images here, or click to browse'
+                    : 'Drag and drop an image here, or click to browse'
+                  }
                 </p>
               </div>
               <p className="text-xs text-muted-foreground">

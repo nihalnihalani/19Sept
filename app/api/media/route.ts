@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/neo4j";
+import { 
+  insertMedia, 
+  getAllMedia, 
+  deleteMedia, 
+  getMediaById,
+  searchMedia,
+  updateMedia 
+} from "@/lib/database";
 import type { MediaMetadata } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -18,6 +25,7 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     let id = searchParams.get("id");
     let url = searchParams.get("url");
+    
     // Try reading JSON body too (optional)
     try {
       const body = await request.json().catch(() => null);
@@ -31,27 +39,22 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Provide 'id' or 'url' to delete" }, { status: 400 });
     }
 
-    const session = getSession();
-    try {
-      const result = await session.run(
-        `MATCH (m:Media)
-         WHERE ($id IS NOT NULL AND m.id = $id)
-            OR ($url IS NOT NULL AND m.url = $url)
-         WITH collect(m) AS ms
-         CALL {
-           WITH ms
-           UNWIND ms AS x
-           DETACH DELETE x
-           RETURN count(*) AS c
-         }
-         RETURN c AS deleted`,
-        { id: id || null, url: url || null }
-      );
-      const deleted = result.records[0]?.get("deleted") ?? 0;
-      return NextResponse.json({ deleted });
-    } finally {
-      await session.close();
+    let deleted = 0;
+    
+    if (id) {
+      const success = await deleteMedia(id);
+      deleted = success ? 1 : 0;
+    } else if (url) {
+      // For URL-based deletion, we need to find the media first
+      const allMedia = await getAllMedia(1000); // Get a large batch to search
+      const mediaToDelete = allMedia.find(m => m.url === url);
+      if (mediaToDelete) {
+        const success = await deleteMedia(mediaToDelete.id);
+        deleted = success ? 1 : 0;
+      }
     }
+
+    return NextResponse.json({ deleted });
   } catch (err: any) {
     console.error("/api/media DELETE error:", err);
     return NextResponse.json({ error: err?.message || "Internal Server Error" }, { status: 500 });
@@ -63,41 +66,36 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type"); // image | video | audio | other
     const tag = searchParams.get("tag");
+    const query = searchParams.get("q"); // search query
     const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
-    const session = getSession();
-    try {
-      const result = await session.run(
-        `MATCH (m:Media)
-         OPTIONAL MATCH (m)-[:TAGGED_WITH]->(t:Tag)
-         WITH m, collect(DISTINCT t.name) AS tags
-         WHERE ($type IS NULL OR m.type = $type)
-           AND ($tag IS NULL OR $tag IN tags)
-         RETURN {
-           id: m.id,
-           url: m.url,
-           type: m.type,
-           title: m.title,
-           description: m.description,
-           width: m.width,
-           height: m.height,
-           duration: m.duration,
-           size: m.size,
-           checksum: m.checksum,
-           createdAt: CASE WHEN m.createdAt IS NULL THEN NULL ELSE toString(m.createdAt) END,
-           tags: tags
-         } AS media
-         ORDER BY coalesce(m.createdAt, datetime('1970-01-01T00:00:00Z')) DESC, m.id DESC
-         SKIP toInteger($offset) LIMIT toInteger($limit)`,
-        { type: type || null, tag: tag || null, limit, offset }
-      );
+    let media: MediaMetadata[];
 
-      const media = result.records.map(r => r.get("media"));
-      return NextResponse.json({ media, page: { limit, offset, count: media.length } });
-    } finally {
-      await session.close();
+    if (query) {
+      // Use search functionality
+      media = await searchMedia(query, limit);
+      // Apply offset manually for search results
+      media = media.slice(offset, offset + limit);
+    } else {
+      // Get all media with pagination
+      media = await getAllMedia(limit, offset);
     }
+
+    // Filter by type if specified
+    if (type) {
+      media = media.filter(m => m.type === type);
+    }
+
+    // Filter by tag if specified
+    if (tag) {
+      media = media.filter(m => m.tags && m.tags.includes(tag));
+    }
+
+    return NextResponse.json({ 
+      media, 
+      page: { limit, offset, count: media.length } 
+    });
   } catch (err: any) {
     console.error("/api/media GET error:", err);
     return NextResponse.json({ error: err?.message || "Internal Server Error" }, { status: 500 });
@@ -113,64 +111,21 @@ export async function POST(request: Request) {
     }
     const data = validation.data;
 
-    const session = getSession();
-    try {
-      // Ensure indexes/constraints (optional, runs each time idempotently on Neo4j >= 5)
-      await session.run(
-        "CREATE CONSTRAINT media_id IF NOT EXISTS FOR (m:Media) REQUIRE m.id IS UNIQUE"
-      );
-      await session.run(
-        "CREATE INDEX tag_name IF NOT EXISTS FOR (t:Tag) ON (t.name)"
-      );
-
-      const result = await session.run(
-        `MERGE (m:Media {id: $id})
-         ON CREATE SET m.createdAt = coalesce(datetime($createdAt), datetime()),
-                       m.url = $url,
-                       m.type = $type,
-                       m.title = $title,
-                       m.description = $description,
-                       m.width = $width,
-                       m.height = $height,
-                       m.duration = $duration,
-                       m.size = $size,
-                       m.checksum = $checksum
-         ON MATCH SET  m.url = $url,
-                       m.type = $type,
-                       m.title = $title,
-                       m.description = $description,
-                       m.width = $width,
-                       m.height = $height,
-                       m.duration = $duration,
-                       m.size = $size,
-                       m.checksum = $checksum
-         WITH m
-         UNWIND coalesce($tags, []) AS tag
-         MERGE (t:Tag {name: tag})
-         MERGE (m)-[:TAGGED_WITH]->(t)
-         RETURN m { .* } AS media`,
-        {
-          id: data.id,
-          url: data.url,
-          type: data.type,
-          title: data.title ?? null,
-          description: data.description ?? null,
-          createdAt: data.createdAt ?? null,
-          width: data.width ?? null,
-          height: data.height ?? null,
-          duration: data.duration ?? null,
-          size: data.size ?? null,
-          checksum: data.checksum ?? null,
-          tags: data.tags ?? [],
-        }
-      );
-
-      const record = result.records[0];
-      const media = record?.get("media") ?? null;
-      return NextResponse.json({ media }, { status: 201 });
-    } finally {
-      await session.close();
+    // Check if media already exists (for upsert behavior)
+    const existingMedia = await getMediaById(data.id);
+    
+    let media: MediaMetadata;
+    
+    if (existingMedia) {
+      // Update existing media (excluding id and createdAt)
+      const { id, createdAt, ...updateData } = data;
+      media = await updateMedia(data.id, updateData) || existingMedia;
+    } else {
+      // Insert new media
+      media = await insertMedia(data);
     }
+
+    return NextResponse.json({ media }, { status: existingMedia ? 200 : 201 });
   } catch (err: any) {
     console.error("/api/media POST error:", err);
     return NextResponse.json({ error: err?.message || "Internal Server Error" }, { status: 500 });

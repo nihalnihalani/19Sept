@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/neo4j";
+import { getAllMedia, deleteMedia } from "@/lib/database";
 import path from "path";
 import { access } from "fs/promises";
 
@@ -15,25 +15,13 @@ async function fileExists(absPath: string): Promise<boolean> {
 }
 
 export async function POST() {
-  const session = getSession();
   try {
-    // Pull a reasonable number of records to audit; adjust if you expect more
-    const result = await session.run(
-      `MATCH (m:Media)
-       RETURN m { .* } AS media
-       ORDER BY coalesce(m.createdAt, datetime('1970-01-01T00:00:00Z')) DESC, m.id DESC
-       LIMIT 2000`
-    );
+    // Get all media from database
+    const mediaList = await getAllMedia(2000); // Get up to 2000 records
 
-    const mediaList: Array<{
-      id?: string;
-      url?: string;
-      type?: string;
-    }> = result.records.map((r) => r.get("media"));
-
-    const missing: Array<{ id?: string; url?: string }> = [];
+    const missing: Array<{ id: string; url: string }> = [];
     for (const m of mediaList) {
-      const url = (m.url || "").toString();
+      const url = m.url || "";
       if (!url || !url.startsWith("/")) continue;
       const rel = url.replace(/^\//, "");
       const abs = path.join(process.cwd(), "public", rel);
@@ -44,17 +32,11 @@ export async function POST() {
 
     let deleted = 0;
     if (missing.length > 0) {
-      const toDelete = missing.map((m) => ({ id: m.id || null, url: m.url || null }));
-      const delResult = await session.run(
-        `UNWIND $items AS item
-         MATCH (m:Media)
-         WHERE (item.id IS NOT NULL AND m.id = item.id)
-            OR (item.url IS NOT NULL AND m.url = item.url)
-         DETACH DELETE m
-         RETURN count(*) AS deleted`,
-        { items: toDelete }
-      );
-      deleted = delResult.records[0]?.get("deleted") ?? 0;
+      // Delete missing media records
+      for (const m of missing) {
+        const success = await deleteMedia(m.id);
+        if (success) deleted++;
+      }
     }
 
     return NextResponse.json({
@@ -65,7 +47,5 @@ export async function POST() {
   } catch (err: any) {
     console.error("/api/media/cleanup POST error:", err);
     return NextResponse.json({ error: err?.message || "Internal Server Error" }, { status: 500 });
-  } finally {
-    await session.close();
   }
 }

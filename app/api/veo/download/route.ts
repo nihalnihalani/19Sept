@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import path from "path";
-import { getSession } from "@/lib/neo4j";
+import { insertMedia } from "@/lib/database";
 
 export async function POST(req: Request) {
   try {
@@ -42,47 +42,21 @@ export async function POST(req: Request) {
       const buffer = Buffer.from(arrayBuffer);
       await writeFile(publicPath, buffer);
 
-      // Insert metadata into Neo4j (best-effort)
-      const session = getSession();
+      // Insert metadata into database (best-effort)
       let media: any = null;
       try {
-        await session.run(
-          "CREATE CONSTRAINT media_id IF NOT EXISTS FOR (m:Media) REQUIRE m.id IS UNIQUE"
-        );
-        await session.run(
-          "CREATE INDEX tag_name IF NOT EXISTS FOR (t:Tag) ON (t.name)"
-        );
-        // NOTE: Do NOT attempt to create a URL uniqueness constraint at runtime.
-        // Existing duplicate data in development can cause constraint creation to fail noisily.
-        // We rely on MERGE (m:Media {url: $url}) below for idempotency per URL.
-        const createdAt = new Date().toISOString();
-        const result = await session.run(
-          `MERGE (m:Media {url: $url})
-           ON CREATE SET m.id = coalesce($id, randomUUID()),
-                         m.createdAt = datetime($createdAt),
-                         m.type = 'video',
-                         m.title = $title,
-                         m.description = $description,
-                         m.size = $size
-           ON MATCH SET  m.type = 'video',
-                         m.title = $title,
-                         m.description = $description,
-                         m.size = $size
-           RETURN m { .* } AS media`,
-          {
-            id: `media-${Date.now()}`,
-            url: `/${fileName}`,
-            title: "Generated Video",
-            description: "Generated via Veo and saved by server",
-            createdAt,
-            size: buffer.length,
-          }
-        );
-        media = result.records[0]?.get("media") ?? null;
+        const id = `media-${Date.now()}`;
+        media = await insertMedia({
+          id,
+          url: `/${fileName}`,
+          type: 'video',
+          title: "Generated Video",
+          description: "Video generated via Veo API",
+          size: buffer.length,
+          tags: ["video", "generated", "veo"]
+        });
       } catch (e) {
-        console.error("Failed to insert video media into Neo4j:", e);
-      } finally {
-        await session.close();
+        console.error("Failed to insert video media into database:", e);
       }
 
       return NextResponse.json({

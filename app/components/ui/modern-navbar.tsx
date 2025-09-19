@@ -14,9 +14,7 @@ import {
   FileImage, 
   Menu,
   Sun,
-  Moon,
-  Globe,
-  Wand2
+  Moon
 } from 'lucide-react';
 import { StudioMode } from '@/lib/types';
 
@@ -27,16 +25,6 @@ interface ModernNavbarProps {
 
 const navigationItems = [
   {
-    id: 'cultural' as StudioMode,
-    label: 'Cultural',
-    icon: Globe,
-  },
-  {
-    id: 'all' as StudioMode,
-    label: 'All',
-    icon: Wand2,
-  },
-  {
     id: 'create-image' as StudioMode,
     label: 'Create',
     icon: Image,
@@ -44,6 +32,11 @@ const navigationItems = [
   {
     id: 'edit-image' as StudioMode,
     label: 'Edit',
+    icon: Layers,
+  },
+  {
+    id: 'compose-image' as StudioMode,
+    label: 'Compose',
     icon: Layers,
   },
   {
@@ -89,7 +82,7 @@ export function ModernNavbar({ currentMode, onModeChange }: ModernNavbarProps) {
         {/* Desktop Navigation */}
         <div className="hidden md:block">
           <Tabs value={currentMode} onValueChange={onModeChange}>
-            <TabsList className="grid w-full grid-cols-6 rounded-full border border-border bg-muted/50 p-1">
+            <TabsList className="grid w-full grid-cols-5 rounded-full border border-border bg-muted/50 p-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 return (

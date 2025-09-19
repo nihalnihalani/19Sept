@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { writeFile } from "fs/promises";
 import path from "path";
-import { getSession } from "@/lib/neo4j";
+import { insertMedia } from "@/lib/database";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is not set.");
@@ -43,61 +43,27 @@ export async function POST(req: Request) {
     const fileBuffer = Buffer.from(image.imageBytes, "base64");
     await writeFile(publicPath, fileBuffer);
 
-    // 2) Insert image bytes + metadata into Neo4j and point URL to streaming endpoint
-    const session = getSession();
+    // 2) Insert metadata into SQLite database
     let mediaRecord: any = null;
     try {
-      await session.run(
-        "CREATE CONSTRAINT media_id IF NOT EXISTS FOR (m:Media) REQUIRE m.id IS UNIQUE"
-      );
-      await session.run(
-        "CREATE INDEX tag_name IF NOT EXISTS FOR (t:Tag) ON (t.name)"
-      );
-      const createdAt = new Date().toISOString();
       const id = `media-${Date.now()}`;
-      const result = await session.run(
-        `MERGE (m:Media {id: $id})
-         ON CREATE SET m.createdAt = datetime($createdAt),
-                       m.url = $url,
-                       m.type = 'image',
-                       m.title = $title,
-                       m.description = $description,
-                       m.size = $size,
-                       m.imageBytes = $imageBytes,
-                       m.mimeType = $mimeType
-         ON MATCH SET  m.url = $url,
-                       m.type = 'image',
-                       m.title = $title,
-                       m.description = $description,
-                       m.size = $size,
-                       m.imageBytes = $imageBytes,
-                       m.mimeType = $mimeType
-         WITH m
-         UNWIND $tags AS tag
-         MERGE (t:Tag {name: tag})
-         MERGE (m)-[:TAGGED_WITH]->(t)
-         RETURN m { .* } AS media`,
-        {
-          id,
-          url: `/api/media/file?id=${id}`,
-          title: prompt.slice(0, 80),
-          description: `Generated from prompt: ${prompt}`,
-          createdAt,
-          size: fileBuffer.length,
-          imageBytes: image.imageBytes,
-          mimeType,
-          tags: prompt
-            .toLowerCase()
-            .split(/[^a-z0-9]+/g)
-            .filter(Boolean)
-            .slice(0, 5),
-        }
-      );
-      mediaRecord = result.records[0]?.get("media") ?? null;
+      const tags = prompt
+        .toLowerCase()
+        .split(/[^a-z0-9]+/g)
+        .filter(Boolean)
+        .slice(0, 5);
+      
+      mediaRecord = await insertMedia({
+        id,
+        url: `/${fileName}`, // Direct file URL
+        type: 'image',
+        title: prompt.slice(0, 80),
+        description: `Generated from prompt: ${prompt}`,
+        size: fileBuffer.length,
+        tags
+      });
     } catch (e) {
-      console.error("Failed to insert media into Neo4j:", e);
-    } finally {
-      await session.close();
+      console.error("Failed to insert media into database:", e);
     }
 
     // 3) Return both the base64 (for backward compatibility) and the streamable URL
@@ -105,7 +71,7 @@ export async function POST(req: Request) {
       image: {
         imageBytes: image.imageBytes,
         mimeType,
-        url: mediaRecord?.url || `/api/media/file?id=${mediaRecord?.id ?? ''}`,
+        url: mediaRecord?.url || `/${fileName}`,
       },
       media: mediaRecord,
     });

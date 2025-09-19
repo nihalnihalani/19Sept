@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is not set.");
 }
 
-// Placeholder instance for future support if videos become available
-const _ai = new GoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: Request) {
   try {
@@ -22,9 +21,7 @@ export async function POST(req: Request) {
     const form = await req.formData();
 
     const prompt = (form.get("prompt") as string) || "";
-    let model = (form.get("model") as string) || "veo-3.0-generate-001";
-    // Coerce common alias to valid model name
-    if (model === "veo-3") model = "veo-3.0-generate-001";
+    const model = (form.get("model") as string) || "veo-3.0-generate-001";
     const negativePrompt = (form.get("negativePrompt") as string) || undefined;
     const aspectRatio = (form.get("aspectRatio") as string) || undefined;
 
@@ -49,14 +46,18 @@ export async function POST(req: Request) {
       image = { imageBytes: cleaned, mimeType: imageMimeType || "image/png" };
     }
 
-    // Video generation is not supported via @google/generative-ai SDK at this time.
-    return NextResponse.json(
-      {
-        error: "Video generation is not supported via the current SDK",
-        note: "The Veo endpoint has been disabled while migrating away from @google/genai. Please switch to image generation endpoints.",
+    const operation = await ai.models.generateVideos({
+      model,
+      prompt,
+      ...(image ? { image } : {}),
+      config: {
+        ...(aspectRatio ? { aspectRatio } : {}),
+        ...(negativePrompt ? { negativePrompt } : {}),
       },
-      { status: 501 }
-    );
+    });
+
+    const name = (operation as unknown as { name?: string }).name;
+    return NextResponse.json({ name });
   } catch (error: unknown) {
     console.error("Error starting Veo generation:", error);
     return NextResponse.json(

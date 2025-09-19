@@ -1,0 +1,119 @@
+[
+  {
+    "id": "media-1758312226921",
+    "url": "/generated_image_1758312226919.png",
+    "type": "image",
+    "title": "flying magical building",
+    "description": "Generated from prompt: flying magical building",
+    "size": 1722033,
+    "tags": [
+      "flying",
+      "magical",
+      "building"
+    ],
+    "createdAt": "2025-09-19T20:03:46.972Z"
+  },
+  {
+    "id": "media-1758312367043",
+    "url": "/generated_image_1758312367042.png",
+    "type": "image",
+    "title": "flying magical building",
+    "description": "Generated from prompt: flying magical building",
+    "size": 1755255,
+    "tags": [
+      "flying",
+      "magical",
+      "building"
+    ],
+    "createdAt": "2025-09-19T20:06:07.043Z"
+  },
+  {
+    "id": "media-1758312706504",
+    "url": "/generated_image_1758312706503.png",
+    "type": "image",
+    "title": "flying magical building",
+    "description": "Generated from prompt: flying magical building",
+    "size": 1613257,
+    "tags": [
+      "flying",
+      "magical",
+      "building"
+    ],
+    "createdAt": "2025-09-19T20:11:46.504Z"
+  },
+  {
+    "id": "media-1758312744856",
+    "url": "/edited_image_1758312744855.png",
+    "type": "image",
+    "title": "Edited Image",
+    "description": "Edited via Gemini from prompt: make it realistic please",
+    "size": 2363301,
+    "tags": [
+      "make",
+      "it",
+      "realistic",
+      "please"
+    ],
+    "createdAt": "2025-09-19T20:12:24.856Z"
+  },
+  {
+    "id": "media-1758312879638",
+    "url": "/edited_image_1758312879637.png",
+    "type": "image",
+    "title": "Edited Image",
+    "description": "Edited via Gemini from prompt: make it realistic please\r\n",
+    "size": 2472367,
+    "tags": [
+      "make",
+      "it",
+      "realistic",
+      "please"
+    ],
+    "createdAt": "2025-09-19T20:14:39.638Z"
+  },
+  {
+    "id": "media-1758313703213",
+    "url": "/generated_image_1758313703212.png",
+    "type": "image",
+    "title": "flying magical building realistic\n",
+    "description": "Generated from prompt: flying magical building realistic\n",
+    "size": 1602773,
+    "tags": [
+      "flying",
+      "magical",
+      "building",
+      "realistic"
+    ],
+    "createdAt": "2025-09-19T20:28:23.214Z"
+  },
+  {
+    "id": "media-1758313731327",
+    "url": "/edited_image_1758313731326.png",
+    "type": "image",
+    "title": "Edited Image",
+    "description": "Edited via Gemini from prompt: make it more relistic please\r\n",
+    "size": 2235472,
+    "tags": [
+      "make",
+      "it",
+      "more",
+      "relistic",
+      "please"
+    ],
+    "createdAt": "2025-09-19T20:28:51.327Z"
+  },
+  {
+    "id": "media-1758315017349",
+    "url": "/generated_video_1758315017346.mp4",
+    "type": "video",
+    "title": "Generated Video",
+    "description": "Video generated via Veo API",
+    "size": 2880159,
+    "tags": [
+      "video",
+      "generated",
+      "veo"
+    ],
+    "createdAt": "2025-09-19T20:50:17.350Z"
+  }
+]

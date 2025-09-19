@@ -6,8 +6,6 @@ import { StudioMode } from '@/lib/types';
 import { ModernNavbar } from '@/components/ui/modern-navbar';
 import { ModernStudioInterface } from '@/components/ui/modern-studio-interface';
 import { ModernGallery } from '@/components/ui/modern-gallery';
-import { ModernCultural } from '@/components/ui/modern-cultural';
-import { ModernAll } from '@/components/ui/modern-all';
 import { MOCK_VIDEOS } from '@/lib/config';
 import { useStudio } from '@/lib/useStudio';
 
@@ -63,14 +61,12 @@ export default function ModernAlchemyStudio() {
   const pathToMode = (path: string): StudioMode => {
     const seg = path.replace(/\/+$/, '').split('/').filter(Boolean)[0] || '';
     switch (seg) {
-      case 'all':
-        return 'all';
-      case 'cultural':
-        return 'cultural';
       case 'create':
         return 'create-image';
       case 'edit':
         return 'edit-image';
+      case 'compose':
+        return 'compose-image';
       case 'video':
         return 'create-video';
       case 'gallery':
@@ -82,20 +78,16 @@ export default function ModernAlchemyStudio() {
 
   const modeToPath = (mode: StudioMode): string => {
     switch (mode) {
-      case 'all':
-        return '/all';
-      case 'cultural':
-        return '/cultural';
       case 'create-image':
         return '/create';
       case 'edit-image':
         return '/edit';
+      case 'compose-image':
+        return '/compose';
       case 'create-video':
         return '/video';
       case 'product-gallery':
         return '/gallery';
-      case 'compose-image':
-        return '/compose';
       default:
         return '/create';
     }
@@ -413,12 +405,23 @@ export default function ModernAlchemyStudio() {
           body: JSON.stringify({ name: operationName }),
         });
         const fresh = await resp.json();
+        console.log('Full operation response:', JSON.stringify(fresh, null, 2));
         
         if (fresh?.done) {
           completed = true;
-          const primaryUri = fresh?.response?.generatedVideos?.[0]?.video?.uri;
-          const fallbackUri = Array.isArray(fresh?.uris) && fresh.uris.length > 0 ? fresh.uris[0] : undefined;
-          const fileUri = primaryUri || fallbackUri;
+          // Extract video URI from the actual response structure
+          const generatedSamples = fresh?.response?.generateVideoResponse?.generatedSamples;
+          let fileUri: string | undefined;
+          
+          if (Array.isArray(generatedSamples) && generatedSamples.length > 0) {
+            // Try different possible URI locations in the response
+            fileUri = generatedSamples[0]?.video?.uri || 
+                     generatedSamples[0]?.uri || 
+                     generatedSamples[0]?.file?.uri;
+          }
+          
+          console.log('Video generation completed. Generated samples:', generatedSamples);
+          console.log('Extracted file URI:', fileUri);
           if (fileUri) {
             try {
               const dl = await fetch('/api/veo/download', {
@@ -506,14 +509,6 @@ export default function ModernAlchemyStudio() {
         >
           {state.mode === 'product-gallery' ? (
             <ModernGallery items={galleryItems} onDelete={handleDelete} />
-          ) : state.mode === 'cultural' ? (
-            <ModernCultural />
-          ) : state.mode === 'maps' ? (
-            <div className="min-h-[70vh]">
-              <iframe src="/maps" className="w-full h-[70vh]" style={{ border: 0 }} />
-            </div>
-          ) : state.mode === 'all' ? (
-            <ModernAll />
           ) : (
             <ModernStudioInterface
               mode={state.mode}

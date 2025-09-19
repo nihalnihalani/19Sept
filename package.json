@@ -2,7 +2,16 @@
   "name": "alchemy-studio",
   "version": "1.0.0",
   "description": "A modern AI-powered creative studio for generating images and videos using Google's Gemini API",
-  "keywords": ["ai", "image-generation", "video-generation", "gemini", "veo", "imagen", "nextjs", "react"],
+  "keywords": [
+    "ai",
+    "image-generation",
+    "video-generation",
+    "gemini",
+    "veo",
+    "imagen",
+    "nextjs",
+    "react"
+  ],
   "author": "Alchemy Studio Team",
   "license": "Apache-2.0",
   "repository": {
@@ -25,6 +34,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.525.0",
+    "minimax-mcp-js": "^0.0.17",
     "next": "15.3.5",
     "rc-slider": "^11.1.8",
     "react": "^19.0.0",

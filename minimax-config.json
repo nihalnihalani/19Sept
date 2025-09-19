@@ -1,0 +1,11 @@
+{
+  "apiKey": "your-minimax-api-key-here",
+  "baseUrl": "https://api.minimax.com",
+  "defaultModel": "MiniMax-Hailuo-02",
+  "defaultDuration": 10,
+  "defaultResolution": "1080P",
+  "outputDirectory": "public/generated-videos",
+  "asyncMode": false,
+  "maxRetries": 3,
+  "timeout": 30000
+}

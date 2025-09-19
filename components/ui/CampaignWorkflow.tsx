@@ -277,11 +277,6 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
         `Design a competitive ${competitiveAnalysis.detectedCategory.name} ad that stands out from ${competitiveAnalysis.insights.topBrands.slice(0, 2).join(' and ')}`
       ];
 
-      const videoPrompts = [
-        `Create a 15-second ${competitiveAnalysis.detectedCategory.name} advertisement video with modern motion graphics and dynamic transitions`,
-        `Generate a lifestyle ${competitiveAnalysis.detectedCategory.name} video ad showing the product in action with smooth camera movements`
-      ];
-
       // Generate images
       const imagePromises = imagePrompts.map(async (prompt, index) => {
         const response = await fetch("/api/gemini/generate", {
@@ -301,12 +296,22 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
         };
       });
 
-      // Generate videos
+      // Generate videos using MiniMax
+      const videoPrompts = [
+        `Create a 15-second ${competitiveAnalysis.detectedCategory.name} advertisement video with modern motion graphics and dynamic transitions`,
+        `Generate a lifestyle ${competitiveAnalysis.detectedCategory.name} video ad showing the product in action with smooth camera movements`
+      ];
+
       const videoPromises = videoPrompts.map(async (prompt, index) => {
-        const response = await fetch("/api/veo/generate", {
+        const response = await fetch("/api/minimax/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ 
+            prompt,
+            duration: 10,
+            resolution: "1080P",
+            asyncMode: false
+          }),
         });
 
         if (!response.ok) throw new Error(`Video generation failed: ${response.statusText}`);
@@ -320,10 +325,29 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
         };
       });
 
-      const [images, videos] = await Promise.all([
-        Promise.all(imagePromises),
-        Promise.all(videoPromises)
-      ]);
+      // Generate images first
+      const images = await Promise.all(imagePromises);
+
+      // Generate videos using MiniMax multiple video generation API
+      const videoResponse = await fetch("/api/minimax/generate-multiple", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: competitiveAnalysis.detectedCategory.name,
+          topBrands: competitiveAnalysis.insights.topBrands,
+          customPrompts: [
+            `Create a 15-second ${competitiveAnalysis.detectedCategory.name} advertisement video with modern motion graphics and dynamic transitions`,
+            `Generate a lifestyle ${competitiveAnalysis.detectedCategory.name} video ad showing the product in action with smooth camera movements`
+          ]
+        }),
+      });
+
+      if (!videoResponse.ok) {
+        throw new Error(`Video generation failed: ${videoResponse.statusText}`);
+      }
+
+      const videoResult = await videoResponse.json();
+      const videos = videoResult.videos || [];
 
       setGeneratedContent({ images, videos });
       setCompletedSteps(prev => new Set([...prev, "generation"]));

@@ -57,6 +57,13 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check if the file type is supported
+      const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!supportedTypes.includes(file.type)) {
+        setError(`Unsupported image format: ${file.type}. Please use JPEG, PNG, or WebP format.`);
+        return;
+      }
+      
       setImageFile(file);
       setImageUrl(URL.createObjectURL(file));
       setDetectedCategory(null);
@@ -76,6 +83,13 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
     const imageFile = files.find(file => file.type.startsWith('image/'));
     
     if (imageFile) {
+      // Check if the file type is supported
+      const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!supportedTypes.includes(imageFile.type)) {
+        setError(`Unsupported image format: ${imageFile.type}. Please use JPEG, PNG, or WebP format.`);
+        return;
+      }
+      
       setImageFile(imageFile);
       setImageUrl(URL.createObjectURL(imageFile));
       setDetectedCategory(null);
@@ -163,7 +177,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
                   Drop product image here, or click to upload
                 </div>
                 <div className="text-sm opacity-80">
-                  PNG, JPG, WEBP up to 10MB
+                  JPEG, PNG, WebP up to 10MB (AVIF not supported)
                 </div>
               </div>
             </div>
@@ -275,7 +289,7 @@ const ProductCategoryDetector: React.FC<ProductCategoryDetectorProps> = ({
         <input
           id="category-image-input"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
           className="hidden"
           onChange={handleImageUpload}
         />

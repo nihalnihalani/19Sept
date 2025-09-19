@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import CampaignWorkflow from "@/components/ui/CampaignWorkflow";
 import CreatorStudio from "@/components/ui/CreatorStudio";
+import CreatorStudioSidebar from "@/components/ui/CreatorStudioSidebar";
 
 type AppMode = "campaign" | "creator";
 
@@ -69,7 +70,7 @@ const AlchemyStudio: React.FC = () => {
               <Palette className="w-4 h-4" />
               <span className="font-medium">Creator Studio</span>
             </button>
-          </div>
+                  </div>
 
           {/* Right: User Profile + Settings */}
           <div className="flex items-center gap-4">
@@ -108,9 +109,9 @@ const AlchemyStudio: React.FC = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
-          </div>
-        </div>
+                            </div>
+                          </div>
+                        </div>
       </header>
 
       {/* Main Content Area */}
@@ -120,53 +121,15 @@ const AlchemyStudio: React.FC = () => {
           {appMode === "creator" && (
             <motion.aside
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: sidebarCollapsed ? 80 : 280, opacity: 1 }}
+              animate={{ width: sidebarCollapsed ? 80 : 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="bg-[#121212]/60 backdrop-blur-xl border-r border-[#2a2a2a]/30 flex-shrink-0"
             >
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-6">
-                  {!sidebarCollapsed && (
-                    <h2 className="text-lg font-semibold text-[#f5f5f5]">Creator Tools</h2>
-                  )}
-                  <button
-                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                    className="p-2 text-[#a5a5a5] hover:text-[#f5f5f5] hover:bg-[#2a2a2a]/30 rounded-xl transition-all duration-300"
-                  >
-                    {sidebarCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
-                  </button>
-                </div>
-
-                <nav className="space-y-2">
-                  {[
-                    { icon: Palette, label: "Create Image", color: "from-blue-500 to-cyan-500" },
-                    { icon: Target, label: "Edit Image", color: "from-green-500 to-emerald-500" },
-                    { icon: Sparkles, label: "Compose", color: "from-purple-500 to-pink-500" },
-                    { icon: Palette, label: "Video", color: "from-orange-500 to-red-500" },
-                    { icon: Target, label: "Product Gallery", color: "from-teal-500 to-blue-500" },
-                    { icon: Sparkles, label: "Category Detection", color: "from-pink-500 to-purple-500" }
-                  ].map((tool, index) => (
-                    <motion.button
-                      key={tool.label}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 group ${
-                        sidebarCollapsed ? "justify-center" : ""
-                      }`}
-                    >
-                      <div className={`p-2 bg-gradient-to-r ${tool.color} rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300`}>
-                        <tool.icon className="w-5 h-5 text-white" />
-                      </div>
-                      {!sidebarCollapsed && (
-                        <span className="text-[#a5a5a5] group-hover:text-[#f5f5f5] font-medium transition-colors">
-                          {tool.label}
-                        </span>
-                      )}
-                    </motion.button>
-                  ))}
-                </nav>
-              </div>
+              <CreatorStudioSidebar 
+                collapsed={sidebarCollapsed}
+                onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+              />
             </motion.aside>
           )}
         </AnimatePresence>

@@ -163,7 +163,7 @@ const CreatorStudio: React.FC<CreatorStudioProps> = ({ onSwitchToCampaign }) => 
                 <Palette className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Creator Studio</h1>
+                <h1 className="text-xl font-bold text-white">Alchemy Studio</h1>
                 <p className="text-gray-400 text-sm">AI-powered creative tools and utilities</p>
               </div>
             </div>

@@ -321,7 +321,7 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
                 <Target className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Campaign Workflow</h1>
+                <h1 className="text-xl font-bold text-white">Alchemy Studio</h1>
                 <p className="text-gray-400 text-sm">AI-powered ad creation pipeline</p>
               </div>
             </div>

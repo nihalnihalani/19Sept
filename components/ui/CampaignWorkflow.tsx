@@ -21,9 +21,11 @@ import {
   Sparkles,
   X,
   Play,
-  Loader2
+  Loader2,
+  ImageIcon as GalleryIcon
 } from "lucide-react";
 import ProductCategoryDetector from "./ProductCategoryDetector";
+import { CampaignGallery } from "../gallery/CampaignGallery";
 
 interface CampaignWorkflowProps {
   onSwitchToCreator: () => void;
@@ -245,6 +247,9 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [competitiveAnalysis, setCompetitiveAnalysis] = useState<CompetitiveAnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  
+  // Gallery State
+  const [showGallery, setShowGallery] = useState(false);
   
   // Generated Content State
   const [isGenerating, setIsGenerating] = useState(false);
@@ -1206,15 +1211,24 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
               <h2 className="text-xl font-bold text-[#f5f5f5] mb-1">Campaign Workflow</h2>
               <p className="text-[#a5a5a5] text-sm">Step-by-step ad creation pipeline</p>
             </div>
-            <div className="text-right">
-              <span className="text-sm font-semibold text-[#f5f5f5]">
-                Step {currentStepIndex + 1} of {WORKFLOW_STEPS.length}
-              </span>
-              <div className="w-32 h-1.5 bg-[#2a2a2a] rounded-full mt-2">
-                <div 
-                  className="h-1.5 bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] rounded-full transition-all duration-500"
-                  style={{ width: `${((currentStepIndex + 1) / WORKFLOW_STEPS.length) * 100}%` }}
-                />
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowGallery(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] hover:from-[#6d2ee6] hover:to-[#4a1f9a] text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl border border-[#7e3ff2]/30"
+              >
+                <GalleryIcon className="w-4 h-4" />
+                <span className="text-sm font-semibold">Campaign Gallery</span>
+              </button>
+              <div className="text-right">
+                <span className="text-sm font-semibold text-[#f5f5f5]">
+                  Step {currentStepIndex + 1} of {WORKFLOW_STEPS.length}
+                </span>
+                <div className="w-32 h-1.5 bg-[#2a2a2a] rounded-full mt-2">
+                  <div 
+                    className="h-1.5 bg-gradient-to-r from-[#7e3ff2] to-[#5a2db8] rounded-full transition-all duration-500"
+                    style={{ width: `${((currentStepIndex + 1) / WORKFLOW_STEPS.length) * 100}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -1311,6 +1325,15 @@ const CampaignWorkflow: React.FC<CampaignWorkflowProps> = ({ onSwitchToCreator }
           </div>
         </div>
       </div>
+
+      {/* Campaign Gallery Modal */}
+      {showGallery && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm">
+          <div className="h-full w-full">
+            <CampaignGallery onClose={() => setShowGallery(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

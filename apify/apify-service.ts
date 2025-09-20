@@ -17,63 +17,19 @@ export class ApifyService {
   }
 
 
-  // Generate mock Google Images data
-  private generateMockGoogleImages(competitor: CompetitorBrand, searchQuery: string): ScrapedAd[] {
-    return [
-      {
-        id: `${competitor.id}-google-1`,
-        brand: competitor.name,
-        title: `${competitor.name} ${searchQuery} - Google Ads Campaign`,
-        description: `Professional ${searchQuery} advertisement from ${competitor.name}. High-quality product showcase with modern design.`,
-        imageUrl: `https://via.placeholder.com/400x300/7C3AED/FFFFFF?text=${competitor.name}+Google+Ad`,
-        productUrl: competitor.website,
-        price: 'N/A',
-        scrapedAt: new Date().toISOString(),
-        platform: 'google',
-        // source: 'google_images', // Removed as it's not in ScrapedAd interface
-        // metadata: { // Removed as it's not in ScrapedAd interface
-        //   searchQuery,
-        //   competitor: competitor.name,
-        //   mockData: true
-        // }
-      },
-      {
-        id: `${competitor.id}-google-2`,
-        brand: competitor.name,
-        title: `${competitor.name} ${searchQuery} - Marketing Campaign`,
-        description: `Creative ${searchQuery} marketing material from ${competitor.name}. Eye-catching design for digital advertising.`,
-        imageUrl: `https://via.placeholder.com/400x300/059669/FFFFFF?text=${competitor.name}+Marketing`,
-        productUrl: competitor.website,
-        price: 'N/A',
-        scrapedAt: new Date().toISOString(),
-        platform: 'google',
-        // source: 'google_images', // Removed as it's not in ScrapedAd interface
-        // metadata: { // Removed as it's not in ScrapedAd interface
-        //   searchQuery,
-        //   competitor: competitor.name,
-        //   mockData: true
-        // }
-      }
-    ];
-  }
-
   // Scrape Google images for a competitor
   async scrapeGoogleImages(competitor: CompetitorBrand, searchQuery: string): Promise<ScrapedAd[]> {
     console.log(`🔍 Starting Google images scraping for ${competitor.name}...`);
-    
-    // For now, always use mock data to avoid API complexity
-    console.log(`🛒 Using mock Google Images data for ${competitor.name}...`);
-    return this.generateMockGoogleImages(competitor, searchQuery);
-    
-    // TODO: Implement real Apify API integration when needed
-    // const actorId = APIFY_ACTORS.GOOGLE_IMAGES;
-    // const input = {
-    //   queries: [`${competitor.name} ${searchQuery} ads`, `${competitor.name} ${searchQuery} advertisement`, `${competitor.name} ${searchQuery} marketing`],
-    //   maxResults: 5,
-    //   country: 'US',
-    //   language: 'en',
-    // };
-    // return await this.runSyncActor(actorId, input, competitor, 'google');
+    const actorId = APIFY_ACTORS.GOOGLE_IMAGES;
+    const input = {
+      queries: [`${competitor.name} ${searchQuery} ads`, `${competitor.name} ${searchQuery} advertisement`, `${competitor.name} ${searchQuery} marketing`],
+      maxResults: 5,
+      country: 'US',
+      language: 'en',
+    };
+
+    console.log(`🔍 Google Images input:`, input);
+    return await this.runSyncActor(actorId, input, competitor, 'google');
   }
 
   // Scrape Amazon products for a competitor
@@ -121,50 +77,18 @@ export class ApifyService {
     platform: string
   ): Promise<ScrapedAd[]> {
     try {
-      // Use the correct Apify API endpoint for running actors
-      const url = `${this.baseUrl}/acts/${actorId}/runs?token=${this.apiKey}`;
+      const url = `${this.baseUrl}/acts/${actorId}${APIFY_CONFIG.SYNC_ENDPOINT}?token=${this.apiKey}`;
       
       console.log(`🌐 Running ${platform} scraper for ${competitor.name}...`);
       console.log(`🔗 URL: ${url}`);
       console.log(`📤 Input payload:`, JSON.stringify(input, null, 2));
       
-      // First, start the actor run
-      const runResponse = await fetch(url, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(input),
-      });
-
-      console.log(`📥 Run response status: ${runResponse.status} ${runResponse.statusText}`);
-
-      if (!runResponse.ok) {
-        const errorText = await runResponse.text();
-        console.error(`❌ ${platform} scraper run failed:`, {
-          status: runResponse.status,
-          statusText: runResponse.statusText,
-          error: errorText
-        });
-        throw new Error(`Apify ${platform} scraper run failed: ${runResponse.status} ${runResponse.statusText}`);
-      }
-
-      const runData = await runResponse.json();
-      const runId = runData.data.id;
-      
-      console.log(`✅ Actor run started with ID: ${runId}`);
-      
-      // Wait for the run to complete and get results
-      const resultsUrl = `${this.baseUrl}/acts/${actorId}/runs/${runId}/dataset/items?token=${this.apiKey}`;
-      
-      // Poll for results (simplified - in production you'd want proper polling)
-      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-      
-      const response = await fetch(resultsUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       console.log(`📥 Response status: ${response.status} ${response.statusText}`);
@@ -272,7 +196,7 @@ export class ApifyService {
   // Test connection to Apify
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/acts/${APIFY_ACTORS.FACEBOOK_ADS}?token=${this.apiKey}`);
+      const response = await fetch(`${this.baseUrl}/acts/${APIFY_ACTORS.GOOGLE_IMAGES}?token=${this.apiKey}`);
       return response.ok;
     } catch (error) {
       console.error('Apify connection test failed:', error);
@@ -333,5 +257,4 @@ export class MockApifyService extends ApifyService {
       data: mockAds,
     };
   }
-
 }

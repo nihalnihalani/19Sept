@@ -42,9 +42,15 @@ interface ScrapedAd {
 }
 
 interface CompetitiveAnalysisResult {
-  detectedCategory: {
+  productCategory: {
     id: string;
     name: string;
+    keywords: string[];
+    competitors: Array<{
+      id: string;
+      name: string;
+      website: string;
+    }>;
   };
   confidence: number;
   imageDescription: string;
@@ -58,12 +64,37 @@ interface CompetitiveAnalysisResult {
     imageBytes: string;
     mimeType: string;
   };
-  insights: {
-    totalCompetitorsAnalyzed: number;
-    totalAdsScraped: number;
-    averagePrice: number;
-    topBrands: string[];
-  };
+  insights: Array<{
+    id: string;
+    type: 'pricing' | 'feature' | 'marketing' | 'positioning' | 'trend';
+    title: string;
+    description: string;
+    source: string;
+    confidence: number;
+    relevance: number;
+    sentiment: 'positive' | 'negative' | 'neutral';
+    category: string;
+    supportingEvidence: string[];
+    metadata: {
+      platform: string;
+      brand: string;
+      timestamp: string;
+      engagement?: {
+        likes: number;
+        shares: number;
+        comments: number;
+      };
+    };
+  }>;
+  marketTrends: Array<{
+    id: string;
+    trend: string;
+    description: string;
+    impact: 'high' | 'medium' | 'low';
+    timeframe: string;
+    supportingData: string[];
+    confidence: number;
+  }>;
   socialMediaAnalysis?: {
     posts: Array<{
       platform: string;
@@ -99,6 +130,15 @@ interface CompetitiveAnalysisResult {
     confidence: number;
     trendingTopics: string[];
     competitorMentions: string[];
+  };
+  summary: {
+    totalCompetitorsAnalyzed: number;
+    totalAdsScraped: number;
+    averagePrice: number;
+    topBrands: string[];
+    keyInsights: string[];
+    marketOpportunities: string[];
+    competitiveGaps: string[];
   };
 }
 
